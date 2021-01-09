@@ -5,43 +5,83 @@
       <input type="text" v-model="search2Query">
         <button>Submit</button>
     </form>
-    <form>
-      <select>
+    <form @submit.prevent="getContents">
+      <select v-model="pageTitle">
         <option :value="item.title"
                 :key="item.title"
                 v-for="item of searchSuggest">
-          {{item.title}}
+                {{item.title}}
         </option>
       </select>
+      <select v-model="pageTitle2">
+        <option :value="item.title"
+                :key="item.title"
+                v-for="item of searchSuggest2">
+                {{item.title}}
+        </option>
+      </select>
+      <button>Submit</button>
     </form>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
-import {getSearch} from "@/API";
-// import {Tree} from "../../server/TREE";
+import {getSearch, getContent} from "@/API";
+import {NodeTree, Tree} from "../../server/TREE";
+import {wikiAnswerContent} from "../../server/API";
+
+const ws = new WebSocket('ws://localhost:3001');
 
 const Component = defineComponent({
   setup() {
       const searchQuery = ref('');
       const search2Query = ref('');
 
-      let searchSuggest: Array<any> = [];
-      let searchSuggest2: Array<any> = [];
+      const searchSuggest = ref([]);
+      const searchSuggest2 = ref([]);
 
-      const getSearchTitles = async () => {
+
+      const pageTitle = ref('')
+      const pageTitle2 = ref('')
+
+      let tree: Tree;
+
+
+    const getSearchTitles = async () => {
         const {data} = await getSearch(searchQuery.value, search2Query.value);
-        searchSuggest = data[0];
-        searchSuggest2 = data[1];
+        searchSuggest.value = data[0];
+        searchSuggest2.value = data[1]
       }
+
+      ws.addEventListener('message', function (event: {data: string}) {
+        const res = JSON.parse(event.data) as wikiAnswerContent
+        const node = tree.findBFF((item) => item.getTitle() === res.parse.title);
+        const titles = res.parse.links.map(item => item.title);
+        node?.addRowChild(...titles);
+
+        console.log(tree)
+      });
+
+      const getContents = async () => {
+        const {data} =  await getContent(pageTitle.value);
+        tree = new Tree(new NodeTree(pageTitle.value));
+        const node = tree.findBFF((item) => item.getTitle() === pageTitle.value);
+        const titles = data.parse.links.map(item => item.title);
+        node?.addRowChild(...titles);
+        ws.send(JSON.stringify(titles))
+      }
+
 
       return {
         searchQuery,
         search2Query,
         searchSuggest,
         searchSuggest2,
-        getSearchTitles
+        pageTitle,
+        pageTitle2,
+        getSearchTitles,
+        getContents
       }
   }
 })

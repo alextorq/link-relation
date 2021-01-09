@@ -7,7 +7,7 @@ type wikiAnswerSearch = {
 }
 
 
-type wikiAnswerContent = {
+export type wikiAnswerContent = {
     parse: {
         title: string,
         pageid: number,
