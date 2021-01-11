@@ -1,5 +1,4 @@
 import {EventEmitter} from 'events';
-import {getContent} from "../src/API";
 import {getPageContent, wikiAnswerContent} from "./API";
 import {AxiosResponse} from "axios";
 

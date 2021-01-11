@@ -22,6 +22,10 @@
       </select>
       <button>Submit</button>
     </form>
+
+    <graf></graf>
+
+
   </div>
 </template>
 
@@ -30,6 +34,7 @@ import { defineComponent, ref } from 'vue'
 import {getSearch, getContent} from "@/API";
 import {NodeTree, Tree} from "../../server/TREE";
 import {wikiAnswerContent} from "../../server/API";
+import graf from './graf.vue'
 
 const ws = new WebSocket('ws://localhost:3001');
 
@@ -83,6 +88,10 @@ const Component = defineComponent({
         getSearchTitles,
         getContents
       }
+  },
+
+  components: {
+    graf
   }
 })
 export default Component
