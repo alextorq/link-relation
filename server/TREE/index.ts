@@ -27,6 +27,10 @@ export class NodeTree {
     public getTitle() {
         return this.name;
     }
+
+    getID () {
+        return this.id;
+    }
 }
 
 
@@ -37,23 +41,58 @@ export class Tree {
         this.root = root;
     }
 
-    public findBFF(cb: (item: NodeTree) => boolean): NodeOrNull{
+    public findBFS(cb: (item: NodeTree) => boolean): NodeOrNull{
         let queue: Array<NodeTree> = [this.root];
         let current: NodeTree;
         let match: NodeOrNull = null;
+        const keys: Array<string> = [];
 
         while (queue.length > 0) {
             current = queue.shift() as NodeTree;
             const status: boolean = cb(current);
+            const key = current.getID();
             if (!status) {
-                queue.push(...current.getChild());
+                if (!keys.includes(key)) {
+                    queue.push(...current.getChild());
+                }
             }else {
                 queue = [];
                 match = current;
             }
+            keys.push(key);
         }
 
         return match
+    }
+
+
+    public getNext(id: string): NodeOrNull {
+        let queue: Array<NodeTree> = [this.root];
+        let current: NodeTree;
+        let match: NodeOrNull = null;
+        const cb = (item: NodeTree) => item.getID() === id;
+        const keys: Array<string> = []
+
+        while (queue.length > 0) {
+            current = queue.shift() as NodeTree;
+            const status: boolean = cb(current);
+            const key = current.getID();
+            if (!status) {
+                if (!keys.includes(key)) {
+                    queue.push(...current.getChild());
+                }
+            }else {
+                match = queue.shift() || null;
+                queue = [];
+            }
+            keys.push(key);
+        }
+
+        return match
+    }
+
+    public getRoot(): NodeTree {
+        return this.root
     }
 }
 

@@ -23,25 +23,29 @@
       <button>Submit</button>
     </form>
 
-    <graf></graf>
+    <graf
+        :key="key"
+        :tree="tree"></graf>
 
 
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import {getSearch, getContent} from "@/API";
+import {defineComponent, ref} from 'vue'
+import {getContent, getSearch} from "@/API";
+import {Commands, webSocketCommand, wikiAnswerContent} from '../../server/API'
 import {NodeTree, Tree} from "../../server/TREE";
-import {wikiAnswerContent} from "../../server/API";
-import graf from './graf.vue'
+import graf from './Graf.vue'
 
 const ws = new WebSocket('ws://localhost:3001');
 
 const Component = defineComponent({
   setup() {
-      const searchQuery = ref('');
-      const search2Query = ref('');
+      const searchQuery = ref('Прометей');
+      const search2Query = ref('Печень');
+
+      let key = ref(1);
 
       const searchSuggest = ref([]);
       const searchSuggest2 = ref([]);
@@ -49,8 +53,9 @@ const Component = defineComponent({
 
       const pageTitle = ref('')
       const pageTitle2 = ref('')
-
-      let tree: Tree;
+      const node = new NodeTree(pageTitle.value)
+      const treeI = new Tree(node)
+      let tree = ref(treeI);
 
 
     const getSearchTitles = async () => {
@@ -59,24 +64,54 @@ const Component = defineComponent({
         searchSuggest2.value = data[1]
       }
 
-      ws.addEventListener('message', function (event: {data: string}) {
-        const res = JSON.parse(event.data) as wikiAnswerContent
-        const node = tree.findBFF((item) => item.getTitle() === res.parse.title);
-        const titles = res.parse.links.map(item => item.title);
-        node?.addRowChild(...titles);
+      let currentNode:  NodeTree|null = null;
 
-        console.log(tree)
+      ws.addEventListener('message', function (event: {data: string}) {
+        const res = JSON.parse(event.data) as webSocketCommand
+        if (res.command === Commands.DATA) {
+          const payload = res.payload as wikiAnswerContent;
+          const node = tree.value.findBFS((item) => item.getTitle() === payload.parse.title);
+          const titles = payload.parse.links.map(item => item.title);
+          node?.addRowChild(...titles);
+          key.value++;
+        }
+        if (res.command === Commands.FINISH) {
+          const rootID = tree.value.getRoot().getID()
+
+          key.value++;
+          if (!currentNode) {
+            currentNode = tree.value.findBFS(item => item.getChild().length > 0 && item.getID() !== rootID);
+          }else {
+            currentNode = tree.value.getNext(currentNode.getID());
+          }
+
+          if (currentNode) {
+            getContentsRec(currentNode.getChild().map(item => item.getTitle()));
+          }
+
+        }
       });
 
       const getContents = async () => {
         const {data} =  await getContent(pageTitle.value);
-        tree = new Tree(new NodeTree(pageTitle.value));
-        const node = tree.findBFF((item) => item.getTitle() === pageTitle.value);
+        tree.value = new Tree(new NodeTree(pageTitle.value));
+        const node = tree.value.findBFS((item) => item.getTitle() === pageTitle.value);
         const titles = data.parse.links.map(item => item.title);
         node?.addRowChild(...titles);
-        ws.send(JSON.stringify(titles))
+        const request: webSocketCommand = {
+          command: Commands.REQUEST_DATA,
+          payload: titles
+        }
+        ws.send(JSON.stringify(request))
       }
 
+      const getContentsRec = async (titles: string[]) => {
+        const request: webSocketCommand = {
+          command: Commands.REQUEST_DATA,
+          payload: titles
+        }
+        ws.send(JSON.stringify(request))
+      }
 
       return {
         searchQuery,
@@ -86,7 +121,9 @@ const Component = defineComponent({
         pageTitle,
         pageTitle2,
         getSearchTitles,
-        getContents
+        getContents,
+        tree,
+        key
       }
   },
 
@@ -112,5 +149,9 @@ li {
 }
 a {
   color: #42b983;
+}
+
+.hello {
+  overflow: hidden;
 }
 </style>

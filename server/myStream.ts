@@ -29,16 +29,17 @@ export class MyStream extends EventEmitter {
     handleRequest(request: Promise<AxiosResponse<wikiAnswerContent>>, item: string, index: number) {
         request.then(data => {
             this.emit('data', {data, index, item});
-            if(this.connection !== null) {
-                this.connection.splice(index, 1);
-                if (this.connection.length === 0) {
-                    this.emit('finish', {data, index, item});
-                }else {
-                    this.start();
-                }
-            }
+            this.start();
         }).catch((e) => {
             this.emit('error', e);
+        }).finally(() => {
+            if(this.connection !== null) {
+                const indexInArray = this.connection.findIndex(item => item === request)
+                this.connection.splice(indexInArray, 1);
+                if (!this.connection.length) {
+                    this.emit('finish', {index, item});
+                }
+            }
         });
     }
 
@@ -48,9 +49,13 @@ export class MyStream extends EventEmitter {
         start.forEach((item, index) => {
             this.emit('request_start', item)
             const request = getPageContent(item);
-            (this.connection as connectionData).push(request);
             this.handleRequest(request, item, index);
+            (this.connection as connectionData).push(request);
         });
+    }
+
+    abort() {
+        this.connection = [];
     }
 
 }

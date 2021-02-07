@@ -16,6 +16,18 @@ export type wikiAnswerContent = {
     }
 }
 
+export enum Commands {
+    FINISH,
+    DATA,
+    ERROR,
+    REQUEST_DATA,
+}
+
+export type webSocketCommand = {
+    command: Commands,
+    payload: Object|Array<any>
+}
+
 export function searchRequest(str: string): Promise<AxiosResponse<wikiAnswerSearch>> {
     return axios.get('https://ru.wikipedia.org/w/api.php', {
         params: {
