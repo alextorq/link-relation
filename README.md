@@ -1,4 +1,8 @@
 # link-relation
+Find relationships between  wikipedia pages
+
+
+![Image](https://github.com/alextorq/link-relation/blob/master/src/assets/image.png?raw=true)
 
 ## Project setup
 ```
