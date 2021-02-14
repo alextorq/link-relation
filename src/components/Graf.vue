@@ -26,15 +26,15 @@
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
 import {Tree, NodeTree} from "../../server/TREE";
-import GrafItem from "@/components/GrafItem";
+import GrafItem from "@/components/GrafItem.vue";
 
 const Component = defineComponent({
   setup({tree}, context) {
     const emit = context.emit;
     type nodes = Array<NodeTree>;
-    const items = ref<nodes>(tree?.root?.children.slice(0, 4) ?? []);
+    const items = ref<nodes>(tree?.getRoot()?.getChild().slice(0, 4) ?? []);
     const arrayLength = items.value.length;
-    const title = ref(tree?.root?.getTitle() ?? '')
+    const title = ref(tree?.getRoot()?.getTitle() ?? '')
 
     const radius = ref(40);
     const size = ref(1000);
@@ -46,12 +46,12 @@ const Component = defineComponent({
     const distance = computed(() => size.value/arrayLength);
 
 
-    const handleClick = (item) => {
+    const handleClick = (item: any) => {
       title.value = item.name;
     }
 
 
-    const handle = (item) => {
+    const handle = (item: any) => {
       emit('click', item)
     }
 
@@ -66,8 +66,8 @@ const Component = defineComponent({
           path: path(),
           lastX: x,
           lastY: size.value,
-          name: item.name,
-          id: item.id
+          name: item.getTitle(),
+          id: item.getID()
         }
       });
     });
