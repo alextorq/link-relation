@@ -60,6 +60,7 @@ const Component = defineComponent({
         const x = index * distance.value + (distance.value * 0.5)
 
         const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value}`;
+        const amountChildren = item.getChild().length;
 
 
         return  {
@@ -67,7 +68,8 @@ const Component = defineComponent({
           lastX: x,
           lastY: size.value,
           name: item.getTitle(),
-          id: item.getID()
+          id: item.getID(),
+          amountChildren: amountChildren
         }
       });
     });

@@ -7,7 +7,7 @@
         :r="40"
         :cx="item.lastX"
         :cy="item.lastY - 40"
-        fill="green"/>
+        :fill="fillColor"/>
     <text
         @click="handle(item)"
         :x="item.lastX"
@@ -33,9 +33,14 @@ export default defineComponent({
       emit('click', item)
     }
 
+    const fillColor = computed(() => {
+      const color = !!item.amountChildren ? 'green' : 'gray'
+      return color;
+    })
+
     return {
       handle,
-
+      fillColor
     }
 
   },
