@@ -1,17 +1,16 @@
 <template>
-  <HelloWorld/>
+  <MainPage/>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component';
-import HelloWorld from './components/HelloWorld.vue';
+import MainPage from './Views/MainPage.vue';
+import {defineComponent} from "vue";
 
-@Options({
+export default defineComponent({
   components: {
-    HelloWorld,
-  },
+    MainPage
+  }
 })
-export default class App extends Vue {}
 </script>
 
 <style>

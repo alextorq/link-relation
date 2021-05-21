@@ -1,7 +1,7 @@
-import axios, {AxiosResponse} from "axios";
+import axios, {AxiosPromise} from "axios";
 import {wikiAnswerContent} from '../../server/API'
 
-export function getSearch(first:string, second:string): Promise<AxiosResponse<any[]>> {
+export function getSearch(first:string, second:string): AxiosPromise<any[]> {
     return axios.get('http://localhost:3000/titles', {
         params: {
             first,
@@ -11,7 +11,7 @@ export function getSearch(first:string, second:string): Promise<AxiosResponse<an
 }
 
 
-export function getContent(title: string): Promise<AxiosResponse<wikiAnswerContent>> {
+export function getContent(title: string): AxiosPromise<wikiAnswerContent> {
     return axios.get('http://localhost:3000/content', {
         params: {
             title,

@@ -1,6 +1,6 @@
-import Router from 'koa-router';
+import * as Router from 'koa-router';
 import {Commands, getPageContent, searchRequest, webSocketCommand} from '../API/index'
-import WebSocket from 'ws';
+import * as WebSocket from 'ws';
 import {MyStream} from "../myStream";
 import {v4 as uuidv4} from 'uuid';
 
@@ -9,11 +9,16 @@ const router = new Router();
 const wss = new WebSocket.Server({ port: 3001 });
 
 
+let currentLevel = 0
+const MAX_LEVEL = 3;
+
+
 // TODO: `edit for multiply users`
 let sockets: {[key: string]: MyStream} = {};
 
 
 function allStop() {
+    currentLevel = 0
     for (const key in sockets) {
         const stream = sockets[key];
         stream.abort();
@@ -22,6 +27,7 @@ function allStop() {
 }
 
 function createStream(ws: WebSocket, titles: Array<string>) {
+    currentLevel++
     const stream = new MyStream(titles);
     const id = uuidv4();
     sockets[id] = stream;
@@ -36,9 +42,9 @@ function createStream(ws: WebSocket, titles: Array<string>) {
         }
         ws.send(JSON.stringify(messageCommand))
     });
-    // stream.on('error', (data) => {
-    //     // console.error(data)
-    // });
+    stream.on('error', (data) => {
+        console.error(data)
+    });
     stream.on('finish', (data) => {
         const messageCommand: webSocketCommand = {
             command: Commands.FINISH,
@@ -51,9 +57,14 @@ function createStream(ws: WebSocket, titles: Array<string>) {
 
 wss.on('connection', (ws) => {
     ws.on('message', (message: string) => {
+        if (currentLevel >= MAX_LEVEL) {
+            return  allStop();
+        }
         const request =  JSON.parse(message) as webSocketCommand;
         if (request.command === Commands.REQUEST_DATA) {
             createStream(ws, request.payload as Array<string>)
+        }else if (request.command === Commands.STOP) {
+            allStop();
         }
     });
     ws.on('close', function close() {
@@ -78,4 +89,4 @@ router
     })
 
 export function routes () { return router.routes() }
-export function allowedMethods () { return router.allowedMethods() }
+// export function allowedMethods () { return router.allowedMethods() }

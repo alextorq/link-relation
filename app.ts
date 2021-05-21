@@ -1,5 +1,5 @@
-import Koa from "koa";
-import cors from '@koa/cors';
+import * as Koa from "koa";
+import * as cors from '@koa/cors';
 import {routes} from "./server/Routes";
 
 

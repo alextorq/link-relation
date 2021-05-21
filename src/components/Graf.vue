@@ -18,6 +18,8 @@
 
     <GrafItem
         @click="handleClick"
+        :limit="4"
+        :offset="0"
         v-for="item of coordinats" :item="item"></GrafItem>
 
   </svg>
@@ -28,7 +30,7 @@ import { defineComponent, ref, computed } from 'vue';
 import {Tree, NodeTree} from "../../server/TREE";
 import GrafItem from "@/components/GrafItem.vue";
 
-const Component = defineComponent({
+export default  defineComponent({
   setup({tree}, context) {
     const emit = context.emit;
     type nodes = Array<NodeTree>;
@@ -50,7 +52,6 @@ const Component = defineComponent({
       title.value = item.name;
     }
 
-
     const handle = (item: any) => {
       emit('click', item)
     }
@@ -61,7 +62,6 @@ const Component = defineComponent({
 
         const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value}`;
         const amountChildren = item.getChild().length;
-
 
         return  {
           path: path(),
@@ -87,14 +87,13 @@ const Component = defineComponent({
     }
   },
   props: {
-    tree: Tree
+    tree: Tree,
   },
   components: {
     GrafItem
   }
 });
 
-export default Component;
 </script>
 
 <style scoped>

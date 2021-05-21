@@ -1,4 +1,4 @@
-import axios, {AxiosResponse} from "axios";
+import axios, {AxiosPromise} from "axios";
 
 type wikiAnswerSearch = {
     query: {
@@ -21,6 +21,7 @@ export enum Commands {
     DATA,
     ERROR,
     REQUEST_DATA,
+    STOP
 }
 
 export type webSocketCommand = {
@@ -28,7 +29,7 @@ export type webSocketCommand = {
     payload: Object|Array<any>
 }
 
-export function searchRequest(str: string): Promise<AxiosResponse<wikiAnswerSearch>> {
+export function searchRequest(str: string): AxiosPromise<wikiAnswerSearch> {
     return axios.get('https://ru.wikipedia.org/w/api.php', {
         params: {
             action: 'query',
@@ -40,7 +41,7 @@ export function searchRequest(str: string): Promise<AxiosResponse<wikiAnswerSear
 }
 
 
-export function getPageContent(str: string): Promise<AxiosResponse<wikiAnswerContent>> {
+export function getPageContent(str: string): AxiosPromise<wikiAnswerContent> {
     return axios.get('https://ru.wikipedia.org/w/api.php', {
         params: {
             action: 'parse',

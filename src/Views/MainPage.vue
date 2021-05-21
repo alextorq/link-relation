@@ -28,19 +28,23 @@
         :tree="tree"></graf>
 
 
+    <div class="pagination">
+
+    </div>
+
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent, ref} from 'vue'
+import {defineComponent, ref, onMounted} from 'vue'
 import {getContent, getSearch} from "@/API";
 import {Commands, webSocketCommand, wikiAnswerContent} from '../../server/API'
 import {NodeTree, Tree} from "../../server/TREE";
-import graf from './Graf.vue'
+import graf from '../components/Graf.vue'
 
 const ws = new WebSocket('ws://localhost:3001');
 
-const Component = defineComponent({
+export default defineComponent({
   setup() {
       const searchQuery = ref('Прометей');
       const search2Query = ref('Печень');
@@ -113,6 +117,8 @@ const Component = defineComponent({
         ws.send(JSON.stringify(request))
       }
 
+      onMounted(getSearchTitles)
+
       return {
         searchQuery,
         search2Query,
@@ -131,7 +137,7 @@ const Component = defineComponent({
     graf
   }
 })
-export default Component
+
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

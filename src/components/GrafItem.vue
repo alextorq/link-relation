@@ -46,6 +46,8 @@ export default defineComponent({
   },
   props:  {
     item: Object,
+    offset: Number,
+    limit: Number,
   }
 })
 </script>
