@@ -1,8 +1,17 @@
 import {EventEmitter} from 'events';
 import {getPageContent, wikiAnswerContent} from "./API";
-import {AxiosResponse} from "axios";
+import {AxiosPromise} from "axios";
 
 type connectionData = Array<Promise<any>>
+
+
+export type StreamData = {
+    parse: {
+        title: string,
+        pageid: number,
+        text: string;
+    }
+}
 
 export class MyStream extends EventEmitter {
     private list: Array<string>;
@@ -26,7 +35,7 @@ export class MyStream extends EventEmitter {
         return 1;
     }
 
-    handleRequest(request: Promise<AxiosResponse<wikiAnswerContent>>, item: string, index: number) {
+    handleRequest(request: AxiosPromise<wikiAnswerContent>, item: string, index: number) {
         request.then(data => {
             this.emit('data', {data, index, item});
             this.start();

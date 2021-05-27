@@ -1,6 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 type NodeOrNull = NodeTree|null;
 
+export type DTO = {
+    id: string,
+    name: string,
+    child: Array<DTO>
+}
 
 export class NodeTree {
     private id: string;
@@ -28,8 +33,16 @@ export class NodeTree {
         return this.name;
     }
 
-    getID () {
+    public getID() {
         return this.id;
+    }
+
+    public getDTO(maxLevel: number): DTO {
+        return {
+            id: this.getID(),
+            name: this.getTitle(),
+            child: !!maxLevel ? this.children.map(item => item.getDTO(maxLevel--)) : []
+        }
     }
 }
 
@@ -65,7 +78,6 @@ export class Tree {
         return match
     }
 
-
     public getNext(id: string): NodeOrNull {
         let queue: Array<NodeTree> = [this.root];
         let current: NodeTree;
@@ -93,6 +105,11 @@ export class Tree {
 
     public getRoot(): NodeTree {
         return this.root
+    }
+
+    public getDTO(maxLevel = 2) {
+        const root = this.getRoot()
+        return  root.getDTO(maxLevel)
     }
 }
 

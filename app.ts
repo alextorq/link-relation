@@ -2,7 +2,6 @@ import * as Koa from "koa";
 import * as cors from '@koa/cors';
 import {routes} from "./server/Routes";
 
-
 const app = new Koa();
 
 

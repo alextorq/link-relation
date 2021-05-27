@@ -25,22 +25,27 @@
 
     <graf
         :key="key"
-        :tree="tree"></graf>
+        :offset="page"
+        :itemPerPage="itemPerPage"
+        @changeNode="changeNode"
+        :tree="treeDTO"></graf>
 
-
-    <div class="pagination">
-
-    </div>
+    <pagination :pages="treeDTO.child"
+                @changePage="changePage"
+                :itemPerPage="itemPerPage"
+                :key="key"
+    ></pagination>
 
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, onMounted} from 'vue'
+import {defineComponent, ref, onMounted, computed, reactive} from 'vue'
 import {getContent, getSearch} from "@/API";
 import {Commands, webSocketCommand, wikiAnswerContent} from '../../server/API'
 import {NodeTree, Tree} from "../../server/TREE";
 import graf from '../components/Graf.vue'
+import pagination from '../components/Pagination.vue'
 
 const ws = new WebSocket('ws://localhost:3001');
 
@@ -54,13 +59,35 @@ export default defineComponent({
       const searchSuggest = ref([]);
       const searchSuggest2 = ref([]);
 
-
       const pageTitle = ref('')
       const pageTitle2 = ref('')
       const node = new NodeTree(pageTitle.value)
-      const treeI = new Tree(node)
-      let tree = ref(treeI);
+      let tree = new Tree(node)
+      let selectedNode = tree.getRoot()
+      let treeDTO = ref(selectedNode.getDTO(1))
 
+      let page = ref(0);
+      let itemPerPage = ref(5);
+
+
+     const changeNode = (id: string) => {
+       const node = tree.findBFS(item => item.getID() === id)
+       if(node) {
+         selectedNode = node
+         treeDTO.value = selectedNode.getDTO(1)
+       }
+       key.value++
+     }
+
+    const updateTree = () => {
+      treeDTO.value = tree.getDTO()
+      key.value++
+    }
+
+    const changePage = (p: number) => {
+      page.value = p
+      key.value++
+    }
 
     const getSearchTitles = async () => {
         const {data} = await getSearch(searchQuery.value, search2Query.value);
@@ -72,36 +99,44 @@ export default defineComponent({
 
       ws.addEventListener('message', function (event: {data: string}) {
         const res = JSON.parse(event.data) as webSocketCommand
+        if (!res.payload.parse.title) {
+          return
+        }
+        try {
+          let title = res.payload.title
+        }catch (e) {
+          return;
+        }
         if (res.command === Commands.DATA) {
           const payload = res.payload as wikiAnswerContent;
-          const node = tree.value.findBFS((item) => item.getTitle() === payload.parse.title);
+          const node = tree.findBFS((item) => item.getTitle() === payload.parse.title);
           const titles = payload.parse.links.map(item => item.title);
           node?.addRowChild(...titles);
-          key.value++;
+          updateTree();
         }
         if (res.command === Commands.FINISH) {
-          const rootID = tree.value.getRoot().getID()
+          const rootID = tree.getRoot().getID()
 
-          key.value++;
+          updateTree()
           if (!currentNode) {
-            currentNode = tree.value.findBFS(item => item.getChild().length > 0 && item.getID() !== rootID);
+            currentNode = tree.findBFS(item => item.getChild().length > 0 && item.getID() !== rootID);
           }else {
-            currentNode = tree.value.getNext(currentNode.getID());
+            currentNode = tree.getNext(currentNode.getID());
           }
 
           if (currentNode) {
             getContentsRec(currentNode.getChild().map(item => item.getTitle()));
           }
-
         }
       });
 
       const getContents = async () => {
         const {data} =  await getContent(pageTitle.value);
-        tree.value = new Tree(new NodeTree(pageTitle.value));
-        const node = tree.value.findBFS((item) => item.getTitle() === pageTitle.value);
+        tree = new Tree(new NodeTree(pageTitle.value));
+        const node = tree.findBFS((item) => item.getTitle() === pageTitle.value);
         const titles = data.parse.links.map(item => item.title);
         node?.addRowChild(...titles);
+        updateTree()
         const request: webSocketCommand = {
           command: Commands.REQUEST_DATA,
           payload: titles
@@ -128,13 +163,18 @@ export default defineComponent({
         pageTitle2,
         getSearchTitles,
         getContents,
-        tree,
-        key
+        treeDTO,
+        key,
+        page,
+        itemPerPage,
+        changeNode,
+        changePage
       }
   },
 
   components: {
-    graf
+    graf,
+    pagination
   }
 })
 

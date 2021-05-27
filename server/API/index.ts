@@ -26,7 +26,7 @@ export enum Commands {
 
 export type webSocketCommand = {
     command: Commands,
-    payload: Object|Array<any>
+    payload: any
 }
 
 export function searchRequest(str: string): AxiosPromise<wikiAnswerSearch> {

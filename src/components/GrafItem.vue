@@ -22,32 +22,31 @@
   </g>
 </template>
 
-<script>
+<script >
 import { defineComponent, ref, computed } from 'vue';
 
 export default defineComponent({
   name: "GrafItem",
-  setup({item}, {emit}) {
+  setup(props, {emit}) {
 
     const handle = (item) => {
       emit('click', item)
     }
 
     const fillColor = computed(() => {
-      const color = !!item.amountChildren ? 'green' : 'gray'
+      const color = !!props.item.amountChildren ? 'green' : 'gray'
       return color;
     })
 
     return {
       handle,
-      fillColor
+      fillColor,
+      item: props.item
     }
 
   },
   props:  {
     item: Object,
-    offset: Number,
-    limit: Number,
   }
 })
 </script>

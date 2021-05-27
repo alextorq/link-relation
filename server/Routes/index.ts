@@ -8,9 +8,8 @@ import {v4 as uuidv4} from 'uuid';
 const router = new Router();
 const wss = new WebSocket.Server({ port: 3001 });
 
-
 let currentLevel = 0
-const MAX_LEVEL = 3;
+const MAX_LEVEL = 1;
 
 
 // TODO: `edit for multiply users`
