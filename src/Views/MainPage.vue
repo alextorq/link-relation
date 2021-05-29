@@ -1,11 +1,11 @@
 <template>
   <div class="hello">
-    <form action="" @submit.prevent="getSearchTitles">
+    <form action="/" @submit.prevent="getSearchTitles">
       <input type="text" v-model="searchQuery">
       <input type="text" v-model="search2Query">
         <button>Submit</button>
     </form>
-    <form @submit.prevent="getContents">
+    <form action="/" @submit.prevent="getContents">
       <select v-model="pageTitle">
         <option :value="item.title"
                 :key="item.title"
@@ -31,6 +31,7 @@
         :tree="treeDTO"></graf>
 
     <pagination :pages="treeDTO.child"
+                :page="page"
                 @changePage="changePage"
                 :itemPerPage="itemPerPage"
                 :key="key"
@@ -66,17 +67,18 @@ export default defineComponent({
       let selectedNode = tree.getRoot()
       let treeDTO = ref(selectedNode.getDTO(1))
 
-      let page = ref(0);
+      let page = ref(1);
       let itemPerPage = ref(5);
 
 
      const changeNode = (id: string) => {
+       if (!id) return
        const node = tree.findBFS(item => item.getID() === id)
        if(node) {
          selectedNode = node
          treeDTO.value = selectedNode.getDTO(1)
        }
-       key.value++
+       changePage(1)
      }
 
     const updateTree = () => {
@@ -99,11 +101,8 @@ export default defineComponent({
 
       ws.addEventListener('message', function (event: {data: string}) {
         const res = JSON.parse(event.data) as webSocketCommand
-        if (!res.payload.parse.title) {
-          return
-        }
         try {
-          let title = res.payload.title
+          let title = res.payload.parse.title
         }catch (e) {
           return;
         }
@@ -123,7 +122,6 @@ export default defineComponent({
           }else {
             currentNode = tree.getNext(currentNode.getID());
           }
-
           if (currentNode) {
             getContentsRec(currentNode.getChild().map(item => item.getTitle()));
           }
@@ -132,16 +130,12 @@ export default defineComponent({
 
       const getContents = async () => {
         const {data} =  await getContent(pageTitle.value);
-        tree = new Tree(new NodeTree(pageTitle.value));
-        const node = tree.findBFS((item) => item.getTitle() === pageTitle.value);
+        const root = new NodeTree(pageTitle.value)
+        tree = new Tree(root);
         const titles = data.parse.links.map(item => item.title);
-        node?.addRowChild(...titles);
+        root?.addRowChild(...titles);
         updateTree()
-        const request: webSocketCommand = {
-          command: Commands.REQUEST_DATA,
-          payload: titles
-        }
-        ws.send(JSON.stringify(request))
+        getContentsRec(titles)
       }
 
       const getContentsRec = async (titles: string[]) => {

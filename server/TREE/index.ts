@@ -4,23 +4,26 @@ type NodeOrNull = NodeTree|null;
 export type DTO = {
     id: string,
     name: string,
+    parent: string|null,
     child: Array<DTO>
 }
 
 export class NodeTree {
     private id: string;
     private name: string;
+    private parent: string|null;
     private children: Array<NodeTree>;
 
-    constructor(name: string, id: string = uuidv4()) {
+    constructor(name: string, parent: string|null = null) {
         this.name = name;
-        this.id = id;
+        this.id = uuidv4();
         this.children = [];
+        this.parent = parent
     }
 
     public addRowChild(...nodes: Array<string>) {
         nodes.forEach((item) => {
-            const node = new NodeTree(item)
+            const node = new NodeTree(item, this.getID())
             this.children.push(node);
         });
     }
@@ -40,9 +43,14 @@ export class NodeTree {
     public getDTO(maxLevel: number): DTO {
         return {
             id: this.getID(),
+            parent: this.getParent(),
             name: this.getTitle(),
             child: !!maxLevel ? this.children.map(item => item.getDTO(maxLevel--)) : []
         }
+    }
+
+    private getParent() {
+        return this.parent;
     }
 }
 

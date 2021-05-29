@@ -8,14 +8,16 @@
     <circle :r="radius"
             :cx="halfSize"
             :cy="topHeight"
-            fill="green"/>
+            @click="() => handleClick({id: parent})"
+            fill="#c6ecc7"/>
       <text
           :x="halfSize"
           :y="topHeight"
           text-anchor="middle"
           stroke="#000"
           font-size="18"
-          stroke-width="2px"
+          letter-spacing="1px"
+          stroke-width="1px"
           dy=".3em">
          {{title}}
       </text>
@@ -36,9 +38,14 @@ import GrafItem from "@/components/GrafItem.vue";
 export default  defineComponent({
   setup(props, context) {
     const emit = context.emit;
-    const root = ref(props.tree)
-    const items = computed(() => root?.value?.child.slice(props.offset * props.itemPerPage, props.itemPerPage) ?? []);
-    const title = computed(() => root?.value?.name)
+
+    const start = computed(() =>(props.offset * props.itemPerPage) - props.itemPerPage);
+    const end = computed(() => start.value + props.itemPerPage)
+
+    const items = computed(() => props.tree.child.slice(start.value, end.value) || [])
+
+    const title = computed(() => props.tree.name)
+    const parent = computed(() => props.tree.parent)
     const level = ref(0)
 
     const arrayLength = computed(() => items.value.length);
@@ -60,7 +67,7 @@ export default  defineComponent({
       return items.value.map((item: { child: string | any[]; name: any; id: any; }, index: number) => {
         const x = index * distance.value + (distance.value * 0.5)
 
-        const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value}`;
+        const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value - 50}`;
         const amountChildren = item.child.length;
 
         return  {
@@ -83,7 +90,8 @@ export default  defineComponent({
       coordinats,
       handleClick,
       title,
-      level
+      level,
+      parent
     }
   },
   emits: {

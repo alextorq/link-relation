@@ -56,11 +56,15 @@ export default defineComponent({
   li {
     margin-right: 10px;
     cursor: pointer;
+    font-weight: 600;
   }
   li:last-child {
     margin-right: 0;
   }
+  li:hover {
+    color: #4fca76;
+  }
   .active {
-    color: #2c3e50;
+    color: #4fca76;
   }
 </style>

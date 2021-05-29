@@ -49,7 +49,6 @@ function createStream(ws: WebSocket, titles: Array<string>) {
             command: Commands.FINISH,
             payload: data
         }
-        console.log('finish')
         ws.send(JSON.stringify(messageCommand));
     });
 }
