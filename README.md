@@ -2,7 +2,7 @@
 Find relationships between  wikipedia pages
 
 
-![Image](https://github.com/alextorq/link-relation/blob/master/src/assets/image.png?raw=true)
+![Image](https://i.ibb.co/d4yddjQ/2021-05-29-22-36-34.png)
 
 ## Project setup
 ```
