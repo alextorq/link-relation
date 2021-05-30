@@ -1,5 +1,6 @@
 import axios, {AxiosPromise} from "axios";
-import {wikiAnswerContent} from '../../server/API'
+import {DTO} from "../../server/TREE";
+import ApiID from './apiID'
 
 export function getSearch(first:string, second:string): AxiosPromise<any[]> {
     return axios.get('http://localhost:3000/titles', {
@@ -10,11 +11,11 @@ export function getSearch(first:string, second:string): AxiosPromise<any[]> {
     });
 }
 
-
-export function getContent(title: string): AxiosPromise<wikiAnswerContent> {
+export function getContent(title: string): AxiosPromise<DTO> {
     return axios.get('http://localhost:3000/content', {
         params: {
             title,
+            id: ApiID.id
         }
     });
 }

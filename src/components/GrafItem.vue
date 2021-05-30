@@ -1,5 +1,6 @@
 <template>
   <path
+      :class="classes"
       :d="item.path"></path>
   <g>
     <circle
@@ -14,9 +15,10 @@
         :y="item.lastY - 40"
         text-anchor="middle"
         stroke="#000"
-        font-size="18"
+        font-size="13"
         letter-spacing="1px"
         stroke-width="1px"
+        style="pointer-events: none;"
         dy=".3em">
       {{item.name}}
     </text>
@@ -34,7 +36,6 @@ export default defineComponent({
       emit('click', item)
     }
 
-
     const classes = computed(() => {
         return {
           list: !!props.item.amountChildren
@@ -46,7 +47,6 @@ export default defineComponent({
       classes,
       item: props.item
     }
-
   },
   emits: {
     click(payload) {
@@ -62,7 +62,7 @@ export default defineComponent({
 <style scoped>
   path {
     fill: none;
-    stroke: #000;
+    stroke: #dbdce0;
     stroke-width: 1.5px;
   }
   circle {
@@ -70,14 +70,18 @@ export default defineComponent({
     transform-origin: center center;
     transition: all 0.4s;
   }
-  .list {
+  circle.list {
     fill: #c6ecc7;
     stroke-width: 10px;
     cursor: pointer;
   }
 
-  .list:hover {
+  circle.list:hover {
     r: 35;
+  }
+
+  path.list {
+    stroke: #c6ecc7;
   }
 
 </style>

@@ -47,8 +47,11 @@ import {Commands, webSocketCommand, wikiAnswerContent} from '../../server/API'
 import {NodeTree, Tree} from "../../server/TREE";
 import graf from '../components/Graf.vue'
 import pagination from '../components/Pagination.vue'
+import apiID from "@/API/apiID";
 
-const ws = new WebSocket('ws://localhost:3001');
+const ws = new WebSocket(`ws://localhost:3001?id=${apiID.id}`);
+
+let timerID: any = null
 
 export default defineComponent({
   setup() {
@@ -68,7 +71,7 @@ export default defineComponent({
       let treeDTO = ref(selectedNode.getDTO(1))
 
       let page = ref(1);
-      let itemPerPage = ref(5);
+      let itemPerPage = ref(6);
 
 
      const changeNode = (id: string) => {
@@ -82,8 +85,11 @@ export default defineComponent({
      }
 
     const updateTree = () => {
-      treeDTO.value = tree.getDTO()
-      key.value++
+      clearTimeout(timerID)
+      timerID = setTimeout(() => {
+        treeDTO.value = tree.getDTO()
+        key.value++
+      }, 1000)
     }
 
     const changePage = (p: number) => {
@@ -96,8 +102,6 @@ export default defineComponent({
         searchSuggest.value = data[0];
         searchSuggest2.value = data[1]
       }
-
-      let currentNode:  NodeTree|null = null;
 
       ws.addEventListener('message', function (event: {data: string}) {
         const res = JSON.parse(event.data) as webSocketCommand
@@ -113,38 +117,17 @@ export default defineComponent({
           node?.addRowChild(...titles);
           updateTree();
         }
-        if (res.command === Commands.FINISH) {
-          const rootID = tree.getRoot().getID()
-
-          updateTree()
-          if (!currentNode) {
-            currentNode = tree.findBFS(item => item.getChild().length > 0 && item.getID() !== rootID);
-          }else {
-            currentNode = tree.getNext(currentNode.getID());
-          }
-          if (currentNode) {
-            getContentsRec(currentNode.getChild().map(item => item.getTitle()));
-          }
-        }
       });
 
       const getContents = async () => {
         const {data} =  await getContent(pageTitle.value);
         const root = new NodeTree(pageTitle.value)
         tree = new Tree(root);
-        const titles = data.parse.links.map(item => item.title);
+        const titles = data.child.map(item => item.name);
         root?.addRowChild(...titles);
         updateTree()
-        getContentsRec(titles)
       }
 
-      const getContentsRec = async (titles: string[]) => {
-        const request: webSocketCommand = {
-          command: Commands.REQUEST_DATA,
-          payload: titles
-        }
-        ws.send(JSON.stringify(request))
-      }
 
       onMounted(getSearchTitles)
 
@@ -175,7 +158,7 @@ export default defineComponent({
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
 h3 {
   margin: 40px 0 0;
 }

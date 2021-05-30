@@ -1,9 +1,4 @@
 <template>
-  <div v-show="level">
-    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 490 490" style="enable-background:new 0 0 490 490;" xml:space="preserve">
-        <path d="M245,258.23l153.302,155.246L490,324.619L245,76.524L0,324.619l91.697,88.857L245,258.23z M43.502,324.14L245,120.101  l201.498,204.04l-47.717,46.252L245,214.653L91.219,370.393L43.502,324.14z"/>
-    </svg>
-  </div>
   <svg :viewBox="viewBox">
     <circle :r="radius"
             :cx="halfSize"
@@ -39,32 +34,29 @@ export default  defineComponent({
   setup(props, context) {
     const emit = context.emit;
 
-    const start = computed(() =>(props.offset * props.itemPerPage) - props.itemPerPage);
-    const end = computed(() => start.value + props.itemPerPage)
+    const startIndex = computed(() =>(props.offset * props.itemPerPage) - props.itemPerPage);
+    const endIndex = computed(() => startIndex.value + props.itemPerPage)
 
-    const items = computed(() => props.tree.child.slice(start.value, end.value) || [])
+    const items = computed(() => props.tree.child.slice(startIndex.value, endIndex.value) || [])
+    const arrayLength = computed(() => items.value.length);
 
     const title = computed(() => props.tree.name)
     const parent = computed(() => props.tree.parent)
     const level = ref(0)
 
-    const arrayLength = computed(() => items.value.length);
+
     const radius = ref(40);
     const size = ref(1000);
-    const topHeight = computed(() => (size.value/ 100) * 20);
+    const topHeight = computed(() => (size.value/ 100) * 10);
     const halfSize = computed(() => size.value / 2);
     const viewBox = computed(() => `0 0 ${size.value} ${size.value}`);
+
     const startPoint = computed(() => `${halfSize.value},${topHeight.value + radius.value}`);
     const startPointControl = computed(() => `${halfSize.value},${topHeight.value + radius.value + 200}`);
     const distance = computed(() => size.value/arrayLength.value);
 
-
-    const handleClick = (item: any) => {
-      emit('changeNode', item.id)
-    }
-
     const coordinats = computed(() => {
-      return items.value.map((item: { child: string | any[]; name: any; id: any; }, index: number) => {
+      return items.value.map((item: { child: string | any[]; name: any; id: any; }, index) => {
         const x = index * distance.value + (distance.value * 0.5)
 
         const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value - 50}`;
@@ -80,6 +72,11 @@ export default  defineComponent({
         }
       });
     });
+
+
+    const handleClick = (item: any) => {
+      emit('changeNode', item.id)
+    }
 
     return {
       radius,
@@ -123,6 +120,6 @@ export default  defineComponent({
 <style scoped>
   svg {
     width: 100vw;
-    height: 50vw;
+    height: 60vw;
   }
 </style>
