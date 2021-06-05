@@ -13,19 +13,34 @@ export class NodeTree {
     private name: string;
     private parent: string|null;
     private children: Array<NodeTree>;
+    private travel: boolean;
 
     constructor(name: string, parent: string|null = null) {
         this.name = name;
         this.id = uuidv4();
         this.children = [];
         this.parent = parent
+        this.travel = false
     }
 
     public addRowChild(...nodes: Array<string>) {
         nodes.forEach((item) => {
             const node = new NodeTree(item, this.getID())
-            this.children.push(node);
+            this.addChild(node)
         });
+    }
+
+    public setTravel() {
+        this.travel = true
+    }
+
+
+    public getNotTravel() {
+        return this.children.filter(node => node.travel === false);
+    }
+
+    public addChild(node: NodeTree) {
+        this.children.push(node);
     }
 
     public getChild(): Array<NodeTree> {
@@ -41,11 +56,12 @@ export class NodeTree {
     }
 
     public getDTO(maxLevel: number): DTO {
+        const level = --maxLevel
         return {
             id: this.getID(),
             parent: this.getParent(),
             name: this.getTitle(),
-            child: !!maxLevel ? this.children.map(item => item.getDTO(maxLevel--)) : []
+            child: level > 0 ? this.children.map(item => item.getDTO(level)) : []
         }
     }
 
@@ -55,11 +71,69 @@ export class NodeTree {
 }
 
 
+export class Index {
+    private index: {
+        [key: string]: Array<string>
+    };
+    constructor() {
+        this.index = {}
+    }
+
+    add(titles: Array<string>) {
+        titles.forEach(title => {
+            const firstLetter = title.charAt(0)
+            if (!this.index[firstLetter]) {
+                this.index[firstLetter] = []
+            }
+            this.index[firstLetter].push(title)
+        })
+    }
+
+    check(title: string) {
+        const firstLetter = title.charAt(0)
+        if (!this.index[firstLetter]) {
+            return false
+        }
+        return this.index[firstLetter].includes(title)
+    }
+}
+
 export class Tree {
     private root: NodeTree;
+    private index: Index;
 
     constructor(root: NodeTree) {
         this.root = root;
+        this.index = new Index()
+    }
+
+    public addChildren(nodePredict: (node: NodeTree) => boolean, children: Array<string>, client = false) {
+        const parentNode = this.findBFS(nodePredict)
+        if (parentNode) {
+            const exist: Array<string> = []
+            const notAdded = children.filter(title => {
+                const node = this.checkExist(title)
+                if (node) {
+                    exist.push(title)
+                }
+                return !node
+            })
+            this.index.add(notAdded)
+            if (exist.length && client) {
+                console.log(client)
+            }
+            parentNode.addRowChild(...notAdded)
+            exist.forEach(item => {
+                const node = this.findBFS(node => node.getTitle() === item)
+                if (node) {
+                    parentNode.addChild(node)
+                }
+            })
+        }
+    }
+
+    public checkExist(title: string) {
+        return this.index.check(title)
     }
 
     public findBFS(cb: (item: NodeTree) => boolean): NodeOrNull{
@@ -70,7 +144,7 @@ export class Tree {
 
         while (queue.length > 0) {
             current = queue.shift() as NodeTree;
-            const status: boolean = cb(current);
+            const status = cb(current);
             const key = current.getID();
             if (!status) {
                 if (!keys.includes(key)) {

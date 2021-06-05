@@ -3,7 +3,7 @@ import {Commands, getPageContent, searchRequest, webSocketCommand} from '../API/
 import * as WebSocket from 'ws';
 import {MyStream} from "../myStream";
 import {v4 as uuidv4} from 'uuid';
-import {Tree, NodeTree, DTO} from '../TREE/index'
+import {Tree, NodeTree, Index} from '../TREE/index'
 import {parse, URLSearchParams} from 'url';
 
 
@@ -25,6 +25,41 @@ const connections: {
 }
 
 
+const request = new Index()
+
+
+class Queue  {
+    private time: number;
+    private lastTime: number;
+    private buffer: any[];
+    private ws: WebSocket;
+    constructor(ws: WebSocket) {
+        this.buffer = [];
+        this.time = 1000;
+        this.ws = ws;
+        this.lastTime = this.getTime()
+    }
+
+    getTime() {
+        return new Date().getTime()
+    }
+
+    add(item: any) {
+        this.buffer.push(item)
+        this.send()
+    }
+
+    send() {
+        const currentTime = this.getTime();
+        if (currentTime - this.lastTime > this.time) {
+            const messages = JSON.stringify(this.buffer)
+            this.ws.send(messages)
+            this.lastTime = currentTime
+            this.buffer = []
+        }
+    }
+}
+
 function allStop() {
     currentLevel = 0
     for (const key in sockets) {
@@ -40,8 +75,9 @@ function getWCById(id: string) {
     return connections[id] || null
 }
 
-function createStream(ws: WebSocket, titles: Array<string>, nodeID: string) {
+function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
     const stream = new MyStream(titles);
+    const queue = new Queue(ws);
     const id = uuidv4();
     sockets[id] = stream;
 
@@ -53,13 +89,15 @@ function createStream(ws: WebSocket, titles: Array<string>, nodeID: string) {
             command: Commands.DATA,
             payload: data.data.data
         }
-        ws.send(JSON.stringify(messageCommand))
-        const node = tree.findBFS(item => item.getID() === nodeID)
+        queue.add(messageCommand)
+        const title = messageCommand.payload.parse.title
         try {
             const titles = data.data.data.parse.links.map((item: {title: string}) => item.title);
-            node?.addRowChild(...titles)
+            tree.addChildren(item => item.getTitle() === title, titles)
+            const node = tree.findBFS(item => item.getTitle() === title)
+            node?.setTravel()
         }catch (e) {
-
+            console.log(e)
         }
     });
     stream.on('error', (data) => {
@@ -68,6 +106,7 @@ function createStream(ws: WebSocket, titles: Array<string>, nodeID: string) {
     stream.on('finish', (data) => {
         const rootID = tree.getRoot().getID()
         // item.getChild().length > 0 &&
+        queue.send();
         if (!currentNode) {
             currentNode = tree.getRoot()
         }else {
@@ -78,9 +117,8 @@ function createStream(ws: WebSocket, titles: Array<string>, nodeID: string) {
             }
         }
         if (currentNode) {
-            createStream(ws, currentNode.getChild().map(item => item.getTitle()), currentNode.getID());
+            createStream(ws, currentNode.getNotTravel().map(item => item.getTitle()));
         }
-
     });
 }
 
@@ -111,8 +149,8 @@ router
             if (data.parse.title && data.parse.links) {
                 const titles = data.parse.links.map(_ => _.title)
                 tree = new Tree(new NodeTree(data.parse.title))
-                tree.getRoot().addRowChild(...titles)
-                createStream(getWCById(id), titles, tree.getRoot().getID())
+                tree.addChildren(node => node.getTitle() === data.parse.title, titles)
+                createStream(getWCById(id), titles, true)
             }
             ctx.body = tree.getDTO();
         }catch (e) {

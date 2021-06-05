@@ -87,7 +87,7 @@ export default defineComponent({
     const updateTree = () => {
       clearTimeout(timerID)
       timerID = setTimeout(() => {
-        treeDTO.value = tree.getDTO()
+        treeDTO.value = tree.getDTO(2)
         key.value++
       }, 1000)
     }
@@ -104,19 +104,31 @@ export default defineComponent({
       }
 
       ws.addEventListener('message', function (event: {data: string}) {
-        const res = JSON.parse(event.data) as webSocketCommand
-        try {
-          let title = res.payload.parse.title
-        }catch (e) {
-          return;
-        }
-        if (res.command === Commands.DATA) {
-          const payload = res.payload as wikiAnswerContent;
-          const node = tree.findBFS((item) => item.getTitle() === payload.parse.title);
-          const titles = payload.parse.links.map(item => item.title);
-          node?.addRowChild(...titles);
-          updateTree();
-        }
+
+        const res = JSON.parse(event.data) as webSocketCommand[]
+        res.forEach(item => {
+          try {
+            let title = item.payload.parse.title
+          }catch (e) {
+            return;
+          }
+          if (item.command === Commands.DATA) {
+            const payload = item.payload as wikiAnswerContent;
+            const title = payload.parse.title
+            const links = payload.parse.links || []
+            if (!title || !links.length) return;
+            const startTime = new Date().getTime()
+            const titles = links.map(item => item.title);
+            tree.addChildren((item) => item.getTitle() === title, titles, true)
+            const end = new Date().getTime() - startTime
+            // if (end > 3_000) {
+            //   ws.close(3000)
+            //   console.log(res)
+            //   console.log(tree)
+            // }
+          }
+        })
+        updateTree();
       });
 
       const getContents = async () => {
@@ -124,10 +136,9 @@ export default defineComponent({
         const root = new NodeTree(pageTitle.value)
         tree = new Tree(root);
         const titles = data.child.map(item => item.name);
-        root?.addRowChild(...titles);
+        tree.addChildren(node => node.getTitle() === root.getTitle(), titles);
         updateTree()
       }
-
 
       onMounted(getSearchTitles)
 
