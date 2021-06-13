@@ -1,9 +1,9 @@
 import * as Router from 'koa-router';
-import {Commands, getPageContent, searchRequest, webSocketCommand} from '../API/index'
+import {Commands, getPageContent, searchRequest, webSocketCommand} from '../API'
 import * as WebSocket from 'ws';
 import {MyStream} from "../myStream";
 import {v4 as uuidv4} from 'uuid';
-import {Tree, NodeTree, Index} from '../TREE/index'
+import {Tree, NodeTree} from '../TREE/index'
 import {parse, URLSearchParams} from 'url';
 
 
@@ -24,8 +24,6 @@ const connections: {
 
 }
 
-
-const request = new Index()
 
 
 class Queue  {
@@ -67,6 +65,8 @@ function allStop() {
         stream.abort();
     }
     sockets = {};
+    currentNode = null
+    tree = new Tree(new NodeTree(''))
 }
 
 let currentNode:  NodeTree|null = null;
@@ -84,7 +84,9 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
     stream.on('data', (data) => {
         try {
             data.data.data.parse.text = ''
-        }catch (e){}
+        }catch (e){
+            return
+        }
         const messageCommand: webSocketCommand = {
             command: Commands.DATA,
             payload: data.data.data
@@ -93,8 +95,8 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
         const title = messageCommand.payload.parse.title
         try {
             const titles = data.data.data.parse.links.map((item: {title: string}) => item.title);
-            tree.addChildren(item => item.getTitle() === title, titles)
-            const node = tree.findBFS(item => item.getTitle() === title)
+            tree.addChildren(title, titles)
+            const node = tree.findBFS(title)
             node?.setTravel()
         }catch (e) {
             console.log(e)
@@ -123,6 +125,7 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
 }
 
 wss.on('connection', (ws, request) => {
+    allStop();
     const parameters = parse(request.url || '')
     const query = new URLSearchParams(parameters.query || '')
     const id = query.get('id') || uuidv4()
@@ -130,6 +133,7 @@ wss.on('connection', (ws, request) => {
     ws.on('close', function close() {
         allStop();
     });
+    // ws.on('')
 })
 
 
@@ -149,7 +153,7 @@ router
             if (data.parse.title && data.parse.links) {
                 const titles = data.parse.links.map(_ => _.title)
                 tree = new Tree(new NodeTree(data.parse.title))
-                tree.addChildren(node => node.getTitle() === data.parse.title, titles)
+                tree.addChildren(title, titles)
                 createStream(getWCById(id), titles, true)
             }
             ctx.body = tree.getDTO();

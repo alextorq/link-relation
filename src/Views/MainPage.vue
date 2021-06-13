@@ -28,27 +28,26 @@
         :offset="page"
         :itemPerPage="itemPerPage"
         @changeNode="changeNode"
-        :tree="treeDTO"></graf>
+        :tree="treeDTO"/>
 
     <pagination :pages="treeDTO.child"
                 :page="page"
                 @changePage="changePage"
                 :itemPerPage="itemPerPage"
-                :key="key"
-    ></pagination>
+                :key="key"/>
 
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, onMounted, computed, reactive} from 'vue'
+import {defineComponent, onMounted, ref} from 'vue'
 import {getContent, getSearch} from "@/API";
-import {Commands, webSocketCommand, wikiAnswerContent} from '../../server/API'
-import {NodeTree, Tree} from "../../server/TREE";
+import {DTO} from "../../server/TREE";
 import graf from '../components/Graf.vue'
 import pagination from '../components/Pagination.vue'
 import apiID from "@/API/apiID";
-
+import longSleepWorker from '@/Worker'
+import {clientCommand, ClientCommands, webSocketCommands, CommandsTypes } from '@/Worker/Commands'
 const ws = new WebSocket(`ws://localhost:3001?id=${apiID.id}`);
 
 let timerID: any = null
@@ -56,7 +55,28 @@ let timerID: any = null
 export default defineComponent({
   setup() {
       const searchQuery = ref('Прометей');
-      const search2Query = ref('Печень');
+      const search2Query = ref('Атлант');
+
+      const initialDTO: DTO = {
+        id: '',
+        name: '',
+        parent: null,
+        child: []
+      }
+
+      const treeDTO = ref(initialDTO)
+
+      longSleepWorker.worker.onmessage = (event: any) => {
+        updateTree(event.data.data)
+      }
+
+      ws.addEventListener('message', (e) => {
+        const payload: webSocketCommands = {
+          commandTypes: CommandsTypes.WEBSOCKET,
+          data: JSON.parse(e.data)
+        }
+        longSleepWorker.send(payload)
+      });
 
       let key = ref(1);
 
@@ -65,10 +85,6 @@ export default defineComponent({
 
       const pageTitle = ref('')
       const pageTitle2 = ref('')
-      const node = new NodeTree(pageTitle.value)
-      let tree = new Tree(node)
-      let selectedNode = tree.getRoot()
-      let treeDTO = ref(selectedNode.getDTO(1))
 
       let page = ref(1);
       let itemPerPage = ref(6);
@@ -76,20 +92,29 @@ export default defineComponent({
 
      const changeNode = (id: string) => {
        if (!id) return
-       const node = tree.findBFS(item => item.getID() === id)
-       if(node) {
-         selectedNode = node
-         treeDTO.value = selectedNode.getDTO(1)
-       }
        changePage(1)
+       requestTree(id, id)
      }
 
-    const updateTree = () => {
+    const updateTree = (data: DTO) => {
       clearTimeout(timerID)
       timerID = setTimeout(() => {
-        treeDTO.value = tree.getDTO(2)
+        treeDTO.value = data
         key.value++
       }, 1000)
+    }
+
+
+    const requestTree = (title: string, id?: string) => {
+      const commands = [{
+        command: ClientCommands.requestTree,
+        payload: {
+          title,
+          id,
+          childLevel: 2
+        }
+      }]
+      longSleepWorker.send({ commandTypes: CommandsTypes.CLIENT, commands})
     }
 
     const changePage = (p: number) => {
@@ -97,47 +122,32 @@ export default defineComponent({
       key.value++
     }
 
-    const getSearchTitles = async () => {
+      const getSearchTitles = async () => {
         const {data} = await getSearch(searchQuery.value, search2Query.value);
         searchSuggest.value = data[0];
         searchSuggest2.value = data[1]
       }
 
-      ws.addEventListener('message', function (event: {data: string}) {
-
-        const res = JSON.parse(event.data) as webSocketCommand[]
-        res.forEach(item => {
-          try {
-            let title = item.payload.parse.title
-          }catch (e) {
-            return;
-          }
-          if (item.command === Commands.DATA) {
-            const payload = item.payload as wikiAnswerContent;
-            const title = payload.parse.title
-            const links = payload.parse.links || []
-            if (!title || !links.length) return;
-            const startTime = new Date().getTime()
-            const titles = links.map(item => item.title);
-            tree.addChildren((item) => item.getTitle() === title, titles, true)
-            const end = new Date().getTime() - startTime
-            // if (end > 3_000) {
-            //   ws.close(3000)
-            //   console.log(res)
-            //   console.log(tree)
-            // }
-          }
-        })
-        updateTree();
-      });
-
       const getContents = async () => {
-        const {data} =  await getContent(pageTitle.value);
-        const root = new NodeTree(pageTitle.value)
-        tree = new Tree(root);
+        const {data} = await getContent(pageTitle.value);
+        const createTree: clientCommand = {
+          command: ClientCommands.ChangeRoot,
+          payload: {
+            title: pageTitle.value
+          }
+        }
         const titles = data.child.map(item => item.name);
-        tree.addChildren(node => node.getTitle() === root.getTitle(), titles);
-        updateTree()
+        const addChild: clientCommand = {
+          command: ClientCommands.AddChild,
+          payload: {
+            title: pageTitle.value,
+            child: titles
+          }
+        }
+        const commands = [createTree, addChild]
+        longSleepWorker.send({ commandTypes: CommandsTypes.CLIENT, commands})
+
+        requestTree(pageTitle.value)
       }
 
       onMounted(getSearchTitles)

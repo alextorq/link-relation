@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+
 type NodeOrNull = NodeTree|null;
 
 export type DTO = {
@@ -33,7 +34,6 @@ export class NodeTree {
     public setTravel() {
         this.travel = true
     }
-
 
     public getNotTravel() {
         return this.children.filter(node => node.travel === false);
@@ -107,8 +107,8 @@ export class Tree {
         this.index = new Index()
     }
 
-    public addChildren(nodePredict: (node: NodeTree) => boolean, children: Array<string>, client = false) {
-        const parentNode = this.findBFS(nodePredict)
+    public addChildren(title: string, children: Array<string>, client = false) {
+        const parentNode = this.findBFS(title)
         if (parentNode) {
             const exist: Array<string> = []
             const notAdded = children.filter(title => {
@@ -119,12 +119,9 @@ export class Tree {
                 return !node
             })
             this.index.add(notAdded)
-            if (exist.length && client) {
-                console.log(client)
-            }
             parentNode.addRowChild(...notAdded)
             exist.forEach(item => {
-                const node = this.findBFS(node => node.getTitle() === item)
+                const node = this.findBFS(item)
                 if (node) {
                     parentNode.addChild(node)
                 }
@@ -136,7 +133,7 @@ export class Tree {
         return this.index.check(title)
     }
 
-    public findBFS(cb: (item: NodeTree) => boolean): NodeOrNull{
+    public findBFSID(title: string): NodeOrNull{
         let queue: Array<NodeTree> = [this.root];
         let current: NodeTree;
         let match: NodeOrNull = null;
@@ -144,7 +141,31 @@ export class Tree {
 
         while (queue.length > 0) {
             current = queue.shift() as NodeTree;
-            const status = cb(current);
+            const status = current.getID() === title
+            const key = current.getID();
+            if (!status) {
+                if (!keys.includes(key)) {
+                    queue.push(...current.getChild());
+                }
+            }else {
+                queue = [];
+                match = current;
+            }
+            keys.push(key);
+        }
+
+        return match
+    }
+
+    public findBFS(title: string): NodeOrNull{
+        let queue: Array<NodeTree> = [this.root];
+        let current: NodeTree;
+        let match: NodeOrNull = null;
+        const keys: Array<string> = [];
+
+        while (queue.length > 0) {
+            current = queue.shift() as NodeTree;
+            const status = current.getTitle() === title
             const key = current.getID();
             if (!status) {
                 if (!keys.includes(key)) {
@@ -189,7 +210,7 @@ export class Tree {
         return this.root
     }
 
-    public getDTO(maxLevel = 2) {
+    public getDTO(maxLevel = 3) {
         const root = this.getRoot()
         return  root.getDTO(maxLevel)
     }
