@@ -30,7 +30,22 @@ function sendTree(node: NodeTree|null) {
     }
 }
 
-const finishNode = 'Атлант'
+
+function sendFinishBrunch(path: (NodeTree | null)[]) {
+    if (path) {
+        // @ts-ignore
+        const fin = path.map(node => node.getDTO(1))
+        // @ts-ignore
+        postMessage({
+            command: ClientCommands.responseFinish,
+            data: fin,
+        })
+    }
+}
+
+
+
+let finishNode = ''
 
 addEventListener("message", async (event)  => {
     const data = event.data.message as payload
@@ -49,10 +64,14 @@ addEventListener("message", async (event)  => {
             if (!title || !links.length) return;
             const titles = links.map(item => item.title);
             tree.addChildren(title, titles, true)
+            if (titles.includes(finishNode)) {
+                const path = tree.getBrunchTop(finishNode)
+                console.log(path)
+                sendFinishBrunch(path)
+            }
+
             }
         })
-        const find = tree.findBFS(finishNode)
-        console.log(find)
         sendTree(selectNode)
     }
 
@@ -73,6 +92,11 @@ addEventListener("message", async (event)  => {
             if (command.command === ClientCommands.requestTree) {
                 selectNode = getNodeFromRequest(command.payload.title, command.payload.id)
                 sendTree(selectNode)
+            }
+
+            if (command.command === ClientCommands.setFinish) {
+                const title = command.payload.title
+                finishNode = title
             }
         })
     }

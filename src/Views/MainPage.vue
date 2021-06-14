@@ -23,6 +23,8 @@
       <button>Submit</button>
     </form>
 
+    <bruch :key="key" :brunch="brunch"></bruch>
+
     <graf
         :key="key"
         :offset="page"
@@ -46,16 +48,16 @@ import {DTO} from "../../server/TREE";
 import graf from '../components/Graf.vue'
 import pagination from '../components/Pagination.vue'
 import apiID from "@/API/apiID";
-import longSleepWorker from '@/Worker'
-import {clientCommand, ClientCommands, webSocketCommands, CommandsTypes } from '@/Worker/Commands'
+import {Commands} from "../../server/API/index";
 const ws = new WebSocket(`ws://localhost:3001?id=${apiID.id}`);
+import bruch from "@/components/bruch.vue";
 
 let timerID: any = null
 
 export default defineComponent({
   setup() {
       const searchQuery = ref('Прометей');
-      const search2Query = ref('Атлант');
+      const search2Query = ref('Идалион');
 
       const initialDTO: DTO = {
         id: '',
@@ -64,18 +66,21 @@ export default defineComponent({
         child: []
       }
 
+      const initialBrunch: DTO[] = []
+      const brunch = ref(initialBrunch)
+
       const treeDTO = ref(initialDTO)
 
-      longSleepWorker.worker.onmessage = (event: any) => {
-        updateTree(event.data.data)
-      }
-
       ws.addEventListener('message', (e) => {
-        const payload: webSocketCommands = {
-          commandTypes: CommandsTypes.WEBSOCKET,
-          data: JSON.parse(e.data)
+        const payload = JSON.parse(e.data)
+        const command = payload.command
+        const data = payload.data
+        if (command === Commands.S_SEND_TREE) {
+          updateTree(data)
         }
-        longSleepWorker.send(payload)
+        if (command === Commands.S_FINISH) {
+          updateBrunch(data)
+        }
       });
 
       let key = ref(1);
@@ -104,17 +109,21 @@ export default defineComponent({
       }, 1000)
     }
 
+    const updateBrunch = (data: DTO[]) => {
+      brunch.value = data
+      key.value++
+    }
 
     const requestTree = (title: string, id?: string) => {
-      const commands = [{
-        command: ClientCommands.requestTree,
+      const command = {
+        command: Commands.C_CHANGE_NODE,
         payload: {
           title,
           id,
           childLevel: 2
         }
-      }]
-      longSleepWorker.send({ commandTypes: CommandsTypes.CLIENT, commands})
+      }
+      ws.send(JSON.stringify(command))
     }
 
     const changePage = (p: number) => {
@@ -129,25 +138,8 @@ export default defineComponent({
       }
 
       const getContents = async () => {
-        const {data} = await getContent(pageTitle.value);
-        const createTree: clientCommand = {
-          command: ClientCommands.ChangeRoot,
-          payload: {
-            title: pageTitle.value
-          }
-        }
-        const titles = data.child.map(item => item.name);
-        const addChild: clientCommand = {
-          command: ClientCommands.AddChild,
-          payload: {
-            title: pageTitle.value,
-            child: titles
-          }
-        }
-        const commands = [createTree, addChild]
-        longSleepWorker.send({ commandTypes: CommandsTypes.CLIENT, commands})
-
-        requestTree(pageTitle.value)
+        const {data} = await getContent(pageTitle.value, pageTitle2.value);
+        updateTree(data)
       }
 
       onMounted(getSearchTitles)
@@ -166,13 +158,15 @@ export default defineComponent({
         page,
         itemPerPage,
         changeNode,
-        changePage
+        changePage,
+        brunch
       }
   },
 
   components: {
     graf,
-    pagination
+    pagination,
+    bruch
   }
 })
 

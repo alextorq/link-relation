@@ -12,11 +12,11 @@ export type DTO = {
 export class NodeTree {
     private id: string;
     private name: string;
-    private parent: string|null;
+    private parent: NodeTree|null;
     private children: Array<NodeTree>;
     private travel: boolean;
 
-    constructor(name: string, parent: string|null = null) {
+    constructor(name: string, parent: NodeTree|null = null) {
         this.name = name;
         this.id = uuidv4();
         this.children = [];
@@ -26,7 +26,7 @@ export class NodeTree {
 
     public addRowChild(...nodes: Array<string>) {
         nodes.forEach((item) => {
-            const node = new NodeTree(item, this.getID())
+            const node = new NodeTree(item, this)
             this.addChild(node)
         });
     }
@@ -59,13 +59,13 @@ export class NodeTree {
         const level = --maxLevel
         return {
             id: this.getID(),
-            parent: this.getParent(),
+            parent: this.getParent()?.getID() ?? null,
             name: this.getTitle(),
             child: level > 0 ? this.children.map(item => item.getDTO(level)) : []
         }
     }
 
-    private getParent() {
+    public getParent() {
         return this.parent;
     }
 }
@@ -156,6 +156,51 @@ export class Tree {
 
         return match
     }
+
+    public getBrunch(title: string) {
+        let current = this.getRoot()
+        let queue: Array<NodeTree> = [current];
+        let currentPath: Array<NodeTree> = [];
+        const keys: Array<string> = [];
+        while(queue.length > 0) {
+            current = queue.shift() as NodeTree;
+            const key = current.getID()
+            if (!keys.includes(key)) {
+                currentPath.push(current)
+                if (current.getTitle() === title) {
+                    queue = []
+                    break
+                }
+                const child = current.getChild()
+                const hasChild = !!child.length
+
+                if (hasChild) {
+                    queue.unshift(...child)
+                }else {
+                    currentPath.pop()
+                }
+            }
+            keys.push(key)
+        }
+
+        return currentPath
+    }
+
+
+    public getBrunchTop(title: string) {
+        const node = this.findBFS(title)
+        if (node) {
+            let parent = node.getParent()
+            const path: Array<NodeOrNull> = [node]
+            while (parent !== null) {
+                path.push(parent)
+                parent = parent.getParent()
+            }
+            return path
+        }
+        return []
+    }
+
 
     public findBFS(title: string): NodeOrNull{
         let queue: Array<NodeTree> = [this.root];

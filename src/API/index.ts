@@ -11,10 +11,11 @@ export function getSearch(first:string, second:string): AxiosPromise<any[]> {
     });
 }
 
-export function getContent(title: string): AxiosPromise<DTO> {
+export function getContent(title: string, last: string): AxiosPromise<DTO> {
     return axios.get('http://localhost:3000/content', {
         params: {
             title,
+            last,
             id: ApiID.id
         }
     });

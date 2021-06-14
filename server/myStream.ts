@@ -30,7 +30,7 @@ export class MyStream extends EventEmitter {
     getCount():number {
         if (!this.connection) {
             this.connection = [];
-            return 50;
+            return 10;
         }
         return 1;
     }
@@ -38,7 +38,7 @@ export class MyStream extends EventEmitter {
     handleRequest(request: AxiosPromise<wikiAnswerContent>, item: string, index: number) {
         request.then(data => {
             this.emit('data', {data, index, item});
-            this.start();
+            // this.start();
         }).catch((e) => {
             this.emit('error', e);
         }).finally(() => {
@@ -52,7 +52,7 @@ export class MyStream extends EventEmitter {
         });
     }
 
-    start() {
+    private start() {
         const count = this.getCount();
         const start = this.getChunk(count);
         start.forEach((item, index) => {
@@ -61,6 +61,10 @@ export class MyStream extends EventEmitter {
             this.handleRequest(request, item, index);
             (this.connection as connectionData).push(request);
         });
+    }
+
+    public next() {
+        this.start()
     }
 
     abort() {

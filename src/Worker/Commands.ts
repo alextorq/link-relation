@@ -9,7 +9,9 @@ export enum ClientCommands {
     ChangeRoot,
     AddChild,
     requestTree,
-    responseTree
+    responseTree,
+    responseFinish,
+    setFinish
 }
 
 export type clientCommand = {

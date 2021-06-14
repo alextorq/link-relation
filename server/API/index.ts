@@ -17,11 +17,12 @@ export type wikiAnswerContent = {
 }
 
 export enum Commands {
-    FINISH,
-    DATA,
-    ERROR,
-    REQUEST_DATA,
-    STOP
+    S_FINISH,
+    S_SEND_TREE,
+    S_ERROR,
+    C_CHANGE_NODE,
+    S_STOP,
+    C_STOP
 }
 
 export type webSocketCommand = {
