@@ -1,47 +1,79 @@
 <template>
     <ul class="container mx-auto">
+      <li @click="handle(1)" v-show="isShowFirstPage">
+        1
+      </li>
+      <li v-show="isShowFirstPage">
+        ...
+      </li>
       <li @click="handle(item)"
           :class="{
               active: item === page
           }"
-          v-for="item of pagesItems">
+          v-for="item of pageItems">
           {{item}}
       </li>
       <li v-show="isShowLastPage">
         ...
       </li>
-      <li v-show="isShowLastPage">
+      <li v-show="isShowLastPage" @click="handle(countOfPage)">
         {{countOfPage}}
       </li>
     </ul>
 </template>
 
-<script >
-import {defineComponent, ref, computed} from 'vue'
+<script lang="ts">
+import {defineComponent, ref, computed, PropType} from 'vue'
+const createRange = (start: number, end: number)  => {
+  const range = []
+  for (let startI = start; startI <= end; startI++) {
+    range.push(startI)
+  }
+  return range
+}
+
 export default defineComponent({
   name: "Pagination",
   setup(props, {emit}) {
-    const currentPage = ref(1)
-    const countOfPage = computed(() => props.pages.length / props.itemPerPage)
-    const pagesItems = computed(() => Math.min(currentPage.value + 6, countOfPage.value))
+    const countOfPage = computed(() => Math.ceil(props.pages.length / props.itemPerPage))
 
-    const isShowLastPage = computed(() => countOfPage > pagesItems)
+    const startPage = computed(() => Math.max(1, props.page - 4))
+    const endPage = computed(() => Math.min(props.page + 4, countOfPage.value))
+    const pageItems = computed(() => createRange(startPage.value, endPage.value))
 
-    const handle = (page) => {
+    const isShowLastPage = computed(() => countOfPage.value > endPage.value)
+    const isShowFirstPage = computed(() => startPage.value > 1)
+
+    const handle = (page: number) => {
       emit('changePage', page)
     }
 
     return {
       countOfPage,
-      pagesItems,
+      pageItems,
       handle,
-      isShowLastPage
+      isShowLastPage,
+      isShowFirstPage
+    }
+  },
+  emits: {
+    changePage(payload: number) {
+      return !!payload
     }
   },
   props: {
-    pages: Array,
-    itemPerPage: Number,
-    page: Number,
+    pages: {
+      type: Array as PropType<Array<any>>,
+      required: true
+    },
+    itemPerPage: {
+      type: Number as PropType<number>,
+      required: true
+    },
+    page: {
+      type: Number as PropType<number>,
+      required: true
+    },
   }
 })
 </script>

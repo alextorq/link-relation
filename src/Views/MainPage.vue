@@ -23,7 +23,7 @@
       <button>Submit</button>
     </form>
 
-    <bruch :key="key" :brunch="brunch"></bruch>
+    <bruch v-if="isShowBrunch" :brunch="brunch"/>
 
     <graf
         :key="key"
@@ -42,7 +42,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, ref} from 'vue'
+import {computed, defineComponent, onMounted, ref} from 'vue'
 import {getContent, getSearch} from "@/API";
 import {DTO} from "../../server/TREE";
 import graf from '../components/Graf.vue'
@@ -68,6 +68,9 @@ export default defineComponent({
 
       const initialBrunch: DTO[] = []
       const brunch = ref(initialBrunch)
+
+
+      const isShowBrunch = computed(() => !!brunch.value.length)
 
       const treeDTO = ref(initialDTO)
 
@@ -159,7 +162,8 @@ export default defineComponent({
         itemPerPage,
         changeNode,
         changePage,
-        brunch
+        brunch,
+        isShowBrunch
       }
   },
 
