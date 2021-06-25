@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, computed, PropType} from 'vue'
+import {defineComponent, computed, PropType} from 'vue'
 const createRange = (start: number, end: number)  => {
   const range = []
   for (let startI = start; startI <= end; startI++) {

@@ -10,10 +10,10 @@ export type DTO = {
 }
 
 export class NodeTree {
-    private id: string;
-    private name: string;
+    public id: string;
+    public name: string;
     private parent: NodeTree|null;
-    private children: Array<NodeTree>;
+    public children: Array<NodeTree>;
     private travel: boolean;
 
     constructor(name: string, parent: NodeTree|null = null) {
@@ -81,16 +81,16 @@ export class Index {
 
     add(titles: Array<string>) {
         titles.forEach(title => {
-            const firstLetter = title.charAt(0)
-            if (!this.index[firstLetter]) {
-                this.index[firstLetter] = []
+            const firstLetters = title.charAt(0) + title.charAt(1)
+            if (!this.index[firstLetters]) {
+                this.index[firstLetters] = []
             }
-            this.index[firstLetter].push(title)
+            this.index[firstLetters].push(title)
         })
     }
 
     check(title: string) {
-        const firstLetter = title.charAt(0)
+        const firstLetter = title.charAt(0) + title.charAt(1)
         if (!this.index[firstLetter]) {
             return false
         }
@@ -202,7 +202,7 @@ export class Tree {
     }
 
 
-    public findBFS(title: string): NodeOrNull{
+    public findBFS(title: string): NodeOrNull {
         let queue: Array<NodeTree> = [this.root];
         let current: NodeTree;
         let match: NodeOrNull = null;
@@ -210,12 +210,12 @@ export class Tree {
 
         while (queue.length > 0) {
             current = queue.shift() as NodeTree;
-            const status = current.getTitle() === title
-            const key = current.getID();
-            if (!status) {
-                if (!keys.includes(key)) {
-                    queue.push(...current.getChild());
-                }
+            const key = current.id;
+            if (keys.includes(key)) {
+                continue
+            }
+            if (current.name !== title) {
+                queue.push(...current.getChild());
             }else {
                 queue = [];
                 match = current;

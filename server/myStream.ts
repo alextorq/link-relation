@@ -63,11 +63,22 @@ export class MyStream extends EventEmitter {
         });
     }
 
+    public destroy() {
+        this.abort()
+        this.removeAllListeners('data')
+        this.removeAllListeners('finish')
+        this.removeAllListeners('error')
+        this.removeAllListeners('request_start')
+        this.emit('destroy')
+    }
+
     public next() {
         this.start()
     }
 
-    abort() {
+    private abort() {
+        this.list = []
+
         this.connection = [];
     }
 

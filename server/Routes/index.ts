@@ -11,9 +11,14 @@ const router = new Router();
 const wss = new WebSocket.Server({ port: 3001 });
 
 let currentLevel = 0
-const MAX_LEVEL = 1;
-let tree = new Tree(new NodeTree(''))
+const MAX_LEVEL = 5;
+let currentNode:  NodeTree|null = null;
+/**
+ * Выбранная в данный момент для просмотра нода
+ */
 let selectNode: NodeTree
+let queue: SendController;
+let tree = new Tree(new NodeTree(''))
 
 let finish = '';
 
@@ -26,8 +31,6 @@ const connections: {
 } = {
 
 }
-
-
 
 class SendController  {
     private time: number;
@@ -44,16 +47,22 @@ class SendController  {
     }
 
     sendTree(node: NodeTree) {
-        const currentTime = this.getTime();
-        if (currentTime - this.lastTime > this.time) {
-            const DTO = node.getDTO(3)
-            const messages = {
-                command: Commands.S_SEND_TREE,
-                data: DTO
+        try {
+            const currentTime = this.getTime();
+            if (currentTime - this.lastTime > this.time) {
+                const DTO = node.getDTO(3)
+                const messages = {
+                    command: Commands.S_SEND_TREE,
+                    data: DTO
+                }
+                this.ws.send(JSON.stringify(messages))
+                this.lastTime = currentTime
             }
-            this.ws.send(JSON.stringify(messages))
-            this.lastTime = currentTime
+        }catch (e) {
+            console.log(this.ws);
+            console.log(e)
         }
+
     }
 
     sendFinal() {
@@ -73,21 +82,19 @@ function allStop() {
     currentLevel = 0
     for (const key in sockets) {
         const stream = sockets[key];
-        stream.abort();
+        stream.destroy();
     }
     sockets = {};
     currentNode = null
     tree = new Tree(new NodeTree(''))
 }
 
-let currentNode:  NodeTree|null = null;
-
 function getWCById(id: string) {
     return connections[id] || null
 }
-let queue: SendController;
 
-function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
+
+function createStream(ws: WebSocket, titles: Array<string>) {
     const stream = new MyStream(titles);
     queue = new SendController(ws);
     const id = uuidv4();
@@ -109,12 +116,9 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
             node?.setTravel()
 
             if (titles.includes(finish)) {
+                console.log('find')
                 queue.sendFinal();
-                stream.abort()
-                // @ts-ignore
-                console.log('finish')
-                stream.removeAllListeners('data')
-                stream.removeAllListeners('finish')
+                stream.destroy()
             }
         }catch (e) {
             console.log(e)
@@ -124,9 +128,11 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
     stream.on('error', (data) => {
         console.error(data)
     });
+    stream.on('destroy', () => {
+        console.log('destroy')
+    });
     stream.on('finish', (data) => {
-        const rootID = tree.getRoot().getID()
-        // item.getChild().length > 0 &&
+        console.log('finish')
         queue.sendTree(selectNode);
         if (!currentNode) {
             currentNode = tree.getRoot()
@@ -138,6 +144,13 @@ function createStream(ws: WebSocket, titles: Array<string>, skipCheck = false) {
             }
         }
         if (currentNode) {
+            currentLevel = tree.getBrunchTop(currentNode.getTitle()).length
+            console.log(currentLevel)
+            if (currentLevel > MAX_LEVEL) {
+                console.log('rich max level search')
+                // TODO notify user
+                return
+            }
             createStream(ws, currentNode.getNotTravel().map(item => item.getTitle()));
         }
     });
@@ -185,7 +198,7 @@ router
                 const titles = data.parse.links.map(_ => _.title)
                 tree = new Tree(new NodeTree(data.parse.title))
                 tree.addChildren(title, titles)
-                createStream(getWCById(id), titles, true)
+                createStream(getWCById(id), titles)
             }
             ctx.body = tree.getDTO();
             selectNode = tree.getRoot()

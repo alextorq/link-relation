@@ -6,7 +6,6 @@ type wikiAnswerSearch = {
     }
 }
 
-
 export type wikiAnswerContent = {
     parse: {
         title: string,
