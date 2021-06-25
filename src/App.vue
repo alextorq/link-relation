@@ -4,13 +4,13 @@
 
 <script lang="ts">
 import MainPage from './Views/MainPage.vue';
-import {defineComponent} from "vue";
+import {defineComponent} from 'vue';
 
 export default defineComponent({
   components: {
-    MainPage
-  }
-})
+    MainPage,
+  },
+});
 </script>
 
 <style>

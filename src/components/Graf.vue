@@ -26,23 +26,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, PropType } from 'vue';
-import {DTO} from "../../server/TREE";
-import GrafItem from "@/components/GrafItem.vue";
+import {defineComponent, ref, computed, PropType} from 'vue';
+import {DTO} from '../../server/TREE';
+import GrafItem from '@/components/GrafItem.vue';
 
-export default  defineComponent({
+export default defineComponent({
   setup(props, context) {
     const emit = context.emit;
 
     const startIndex = computed(() =>(props.offset * props.itemPerPage) - props.itemPerPage);
-    const endIndex = computed(() => startIndex.value + props.itemPerPage)
+    const endIndex = computed(() => startIndex.value + props.itemPerPage);
 
-    const items = computed(() => props.tree.child.slice(startIndex.value, endIndex.value) || [])
+    const items = computed(() => props.tree.child.slice(startIndex.value, endIndex.value) || []);
     const arrayLength = computed(() => items.value.length);
 
-    const title = computed(() => props.tree.name)
-    const parent = computed(() => props.tree.parent)
-    const level = ref(0)
+    const title = computed(() => props.tree.name);
+    const parent = computed(() => props.tree.parent);
+    const level = ref(0);
 
 
     const radius = ref(40);
@@ -57,26 +57,26 @@ export default  defineComponent({
 
     const coordinats = computed(() => {
       return items.value.map((item: { child: string | any[]; name: any; id: any; }, index) => {
-        const x = index * distance.value + (distance.value * 0.5)
+        const x = index * distance.value + (distance.value * 0.5);
 
         const path = () => `M ${startPoint.value} C ${startPointControl.value} ${x},${halfSize.value} ${x},${size.value - 50}`;
         const amountChildren = item.child.length;
 
-        return  {
+        return {
           path: path(),
           lastX: x,
           lastY: size.value,
           name: item.name,
           id: item.id,
-          amountChildren: amountChildren
-        }
+          amountChildren: amountChildren,
+        };
       });
     });
 
 
     const handleClick = (item: any) => {
-      emit('changeNode', item.id)
-    }
+      emit('changeNode', item.id);
+    };
 
     return {
       radius,
@@ -88,18 +88,18 @@ export default  defineComponent({
       handleClick,
       title,
       level,
-      parent
-    }
+      parent,
+    };
   },
   emits: {
     changeNode(payload: string) {
-      return !!payload
-    }
+      return !!payload;
+    },
   },
   props: {
     tree: {
       type: Object as PropType<DTO>,
-      required: true
+      required: true,
     },
     itemPerPage: {
       type: Number as PropType<number>,
@@ -108,11 +108,11 @@ export default  defineComponent({
     offset: {
       type: Number as PropType<number>,
       default: 1,
-    }
+    },
   },
   components: {
-    GrafItem
-  }
+    GrafItem,
+  },
 });
 
 </script>

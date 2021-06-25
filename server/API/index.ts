@@ -1,4 +1,4 @@
-import axios, {AxiosPromise} from "axios";
+import axios, {AxiosPromise} from 'axios';
 
 type wikiAnswerSearch = {
     query: {
@@ -30,26 +30,26 @@ export type webSocketCommand = {
 }
 
 export function searchRequest(str: string): AxiosPromise<wikiAnswerSearch> {
-    return axios.get('https://ru.wikipedia.org/w/api.php', {
-        params: {
-            action: 'query',
-            list: 'search',
-            srsearch: str,
-            format: 'json'
-        }
-    })
+  return axios.get('https://ru.wikipedia.org/w/api.php', {
+    params: {
+      action: 'query',
+      list: 'search',
+      srsearch: str,
+      format: 'json',
+    },
+  });
 }
 
 
 export function getPageContent(str: string): AxiosPromise<wikiAnswerContent> {
-    return axios.get('https://ru.wikipedia.org/w/api.php', {
-        params: {
-            action: 'parse',
-            page: str,
-            prop: 'text|links',
-            format: 'json',
-            formatversion:2
-        }
-    })
+  return axios.get('https://ru.wikipedia.org/w/api.php', {
+    params: {
+      action: 'parse',
+      page: str,
+      prop: 'text|links',
+      format: 'json',
+      formatversion: 2,
+    },
+  });
 }
 

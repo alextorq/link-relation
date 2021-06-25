@@ -42,80 +42,80 @@
 </template>
 
 <script lang="ts">
-import {computed, defineComponent, onMounted, ref} from 'vue'
-import {getContent, getSearch} from "@/API";
-import {DTO} from "../../server/TREE";
-import graf from '../components/Graf.vue'
-import pagination from '../components/Pagination.vue'
-import apiID from "@/API/apiID";
-import {Commands} from "../../server/API/index";
+import {computed, defineComponent, onMounted, ref} from 'vue';
+import {getContent, getSearch} from '@/API';
+import {DTO} from '../../server/TREE';
+import graf from '../components/Graf.vue';
+import pagination from '../components/Pagination.vue';
+import apiID from '@/API/apiID';
+import {Commands} from '../../server/API/index';
 const ws = new WebSocket(`ws://localhost:3001?id=${apiID.id}`);
-import bruch from "@/components/bruch.vue";
+import bruch from '@/components/bruch.vue';
 
-let timerID: any = null
+let timerID: any = null;
 
 export default defineComponent({
   setup() {
-      const searchQuery = ref('Прометей');
-      const search2Query = ref('Идалион');
+    const searchQuery = ref('Прометей');
+    const search2Query = ref('Идалион');
 
-      const initialDTO: DTO = {
-        id: '',
-        name: '',
-        parent: null,
-        child: []
+    const initialDTO: DTO = {
+      id: '',
+      name: '',
+      parent: null,
+      child: [],
+    };
+
+    const initialBrunch: DTO[] = [];
+    const brunch = ref(initialBrunch);
+
+
+    const isShowBrunch = computed(() => !!brunch.value.length);
+
+    const treeDTO = ref(initialDTO);
+
+    ws.addEventListener('message', (e) => {
+      const payload = JSON.parse(e.data);
+      const command = payload.command;
+      const data = payload.data;
+      if (command === Commands.S_SEND_TREE) {
+        updateTree(data);
       }
+      if (command === Commands.S_FINISH) {
+        updateBrunch(data);
+      }
+    });
 
-      const initialBrunch: DTO[] = []
-      const brunch = ref(initialBrunch)
+    const key = ref(1);
 
+    const searchSuggest = ref([]);
+    const searchSuggest2 = ref([]);
 
-      const isShowBrunch = computed(() => !!brunch.value.length)
+    const pageTitle = ref('');
+    const pageTitle2 = ref('');
 
-      const treeDTO = ref(initialDTO)
-
-      ws.addEventListener('message', (e) => {
-        const payload = JSON.parse(e.data)
-        const command = payload.command
-        const data = payload.data
-        if (command === Commands.S_SEND_TREE) {
-          updateTree(data)
-        }
-        if (command === Commands.S_FINISH) {
-          updateBrunch(data)
-        }
-      });
-
-      let key = ref(1);
-
-      const searchSuggest = ref([]);
-      const searchSuggest2 = ref([]);
-
-      const pageTitle = ref('')
-      const pageTitle2 = ref('')
-
-      let page = ref(1);
-      let itemPerPage = ref(6);
+    const page = ref(1);
+    const itemPerPage = ref(6);
 
 
-     const changeNode = (id: string) => {
-       if (!id) return
-       changePage(1)
-       requestTree(id, id)
-     }
+    const changeNode = (id: string) => {
+      if (!id) return;
+      changePage(1);
+      requestTree(id, id);
+    };
 
     const updateTree = (data: DTO) => {
-      clearTimeout(timerID)
+      clearTimeout(timerID);
       timerID = setTimeout(() => {
-        treeDTO.value = data
-        key.value++
-      }, 1000)
-    }
+        treeDTO.value = data;
+        key.value++;
+      }, 1000);
+    };
 
     const updateBrunch = (data: DTO[]) => {
-      brunch.value = data
-      key.value++
-    }
+      brunch.value = data;
+      key.value++;
+    };
 
     const requestTree = (title: string, id?: string) => {
       const command = {
@@ -123,56 +123,56 @@ export default defineComponent({
         payload: {
           title,
           id,
-          childLevel: 2
-        }
-      }
-      ws.send(JSON.stringify(command))
-    }
+          childLevel: 2,
+        },
+      };
+      ws.send(JSON.stringify(command));
+    };
 
     const changePage = (p: number) => {
-      page.value = p
-      key.value++
-    }
+      page.value = p;
+      key.value++;
+    };
 
-      const getSearchTitles = async () => {
-        const {data} = await getSearch(searchQuery.value, search2Query.value);
-        searchSuggest.value = data[0];
-        searchSuggest2.value = data[1]
-      }
+    const getSearchTitles = async () => {
+      const {data} = await getSearch(searchQuery.value, search2Query.value);
+      searchSuggest.value = data[0];
+      searchSuggest2.value = data[1];
+    };
 
-      const getContents = async () => {
-        const {data} = await getContent(pageTitle.value, pageTitle2.value);
-        updateTree(data)
-      }
+    const getContents = async () => {
+      const {data} = await getContent(pageTitle.value, pageTitle2.value);
+      updateTree(data);
+    };
 
-      onMounted(getSearchTitles)
+    onMounted(getSearchTitles);
 
-      return {
-        searchQuery,
-        search2Query,
-        searchSuggest,
-        searchSuggest2,
-        pageTitle,
-        pageTitle2,
-        getSearchTitles,
-        getContents,
-        treeDTO,
-        key,
-        page,
-        itemPerPage,
-        changeNode,
-        changePage,
-        brunch,
-        isShowBrunch
-      }
+    return {
+      searchQuery,
+      search2Query,
+      searchSuggest,
+      searchSuggest2,
+      pageTitle,
+      pageTitle2,
+      getSearchTitles,
+      getContents,
+      treeDTO,
+      key,
+      page,
+      itemPerPage,
+      changeNode,
+      changePage,
+      brunch,
+      isShowBrunch,
+    };
   },
 
   components: {
     graf,
     pagination,
-    bruch
-  }
-})
+    bruch,
+  },
+});
 
 </script>
 

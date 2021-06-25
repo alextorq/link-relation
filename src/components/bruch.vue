@@ -8,28 +8,28 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, computed, PropType} from 'vue'
-import {DTO} from "../../server/TREE";
+import {defineComponent, ref, computed, PropType} from 'vue';
+import {DTO} from '../../server/TREE';
 
 export default defineComponent({
-  name: "bruch",
+  name: 'bruch',
   setup(props, {emit}) {
     const handle = (page: any) => {
       // emit('changePage', page)
-    }
-    const reverse = computed(() => props.brunch.reverse())
+    };
+    const reverse = computed(() => props.brunch.reverse());
     return {
       handle,
-      reverse
-    }
+      reverse,
+    };
   },
   props: {
     brunch: {
       type: Array as PropType<DTO[]>,
-      required: true
+      required: true,
     },
-  }
-})
+  },
+});
 </script>
 
 <style scoped>

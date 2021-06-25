@@ -1,11 +1,11 @@
-const worker = new Worker('./worker.ts', { type: 'module' });
+const worker = new Worker('./worker.ts', {type: 'module'});
 
-//Extend EE
-const send = message => worker.postMessage({
-    message
-})
+// Extend EE
+const send = (message) => worker.postMessage({
+  message,
+});
 
 export default {
-    worker,
-    send
-}
+  worker,
+  send,
+};

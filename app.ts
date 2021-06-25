@@ -1,6 +1,6 @@
-import * as Koa from "koa";
+import * as Koa from 'koa';
 import * as cors from '@koa/cors';
-import {routes} from "./server/Routes";
+import {routes} from './server/Routes';
 
 const app = new Koa();
 

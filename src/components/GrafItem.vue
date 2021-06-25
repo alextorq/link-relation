@@ -26,37 +26,36 @@
 </template>
 
 <script >
-import { defineComponent, ref, computed } from 'vue';
+import {defineComponent, ref, computed} from 'vue';
 
 export default defineComponent({
-  name: "GrafItem",
+  name: 'GrafItem',
   setup(props, {emit}) {
-
     const handle = (item) => {
-      emit('click', item)
-    }
+      emit('click', item);
+    };
 
     const classes = computed(() => {
-        return {
-          list: !!props.item.amountChildren
-        }
-    })
+      return {
+        list: !!props.item.amountChildren,
+      };
+    });
 
     return {
       handle,
       classes,
-      item: props.item
-    }
+      item: props.item,
+    };
   },
   emits: {
     click(payload) {
-      return !!payload
-    }
+      return !!payload;
+    },
   },
-  props:  {
+  props: {
     item: Object,
-  }
-})
+  },
+});
 </script>
 
 <style scoped>

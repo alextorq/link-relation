@@ -1,4 +1,4 @@
-import { webSocketCommand} from "../../server/API";
+import {webSocketCommand} from '../../server/API';
 
 export enum CommandsTypes {
     CLIENT,

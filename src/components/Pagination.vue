@@ -23,59 +23,59 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, computed, PropType} from 'vue'
-const createRange = (start: number, end: number)  => {
-  const range = []
+import {defineComponent, computed, PropType} from 'vue';
+const createRange = (start: number, end: number) => {
+  const range = [];
   for (let startI = start; startI <= end; startI++) {
-    range.push(startI)
+    range.push(startI);
   }
-  return range
-}
+  return range;
+};
 
 export default defineComponent({
-  name: "Pagination",
+  name: 'Pagination',
   setup(props, {emit}) {
-    const countOfPage = computed(() => Math.ceil(props.pages.length / props.itemPerPage))
+    const countOfPage = computed(() => Math.ceil(props.pages.length / props.itemPerPage));
 
-    const startPage = computed(() => Math.max(1, props.page - 4))
-    const endPage = computed(() => Math.min(props.page + 4, countOfPage.value))
-    const pageItems = computed(() => createRange(startPage.value, endPage.value))
+    const startPage = computed(() => Math.max(1, props.page - 4));
+    const endPage = computed(() => Math.min(props.page + 4, countOfPage.value));
+    const pageItems = computed(() => createRange(startPage.value, endPage.value));
 
-    const isShowLastPage = computed(() => countOfPage.value > endPage.value)
-    const isShowFirstPage = computed(() => startPage.value > 1)
+    const isShowLastPage = computed(() => countOfPage.value > endPage.value);
+    const isShowFirstPage = computed(() => startPage.value > 1);
 
     const handle = (page: number) => {
-      emit('changePage', page)
-    }
+      emit('changePage', page);
+    };
 
     return {
       countOfPage,
       pageItems,
       handle,
       isShowLastPage,
-      isShowFirstPage
-    }
+      isShowFirstPage,
+    };
   },
   emits: {
     changePage(payload: number) {
-      return !!payload
-    }
+      return !!payload;
+    },
   },
   props: {
     pages: {
       type: Array as PropType<Array<any>>,
-      required: true
+      required: true,
     },
     itemPerPage: {
       type: Number as PropType<number>,
-      required: true
+      required: true,
     },
     page: {
       type: Number as PropType<number>,
-      required: true
+      required: true,
     },
-  }
-})
+  },
+});
 </script>
 
 <style scoped>
