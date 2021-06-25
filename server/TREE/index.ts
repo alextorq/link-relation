@@ -120,8 +120,8 @@ export class Tree {
             })
             this.index.add(notAdded)
             parentNode.addRowChild(...notAdded)
-            exist.forEach(item => {
-                const node = this.findBFS(item)
+            const ex = this.findBFSNodes(exist)
+            ex.forEach(node => {
                 if (node) {
                     parentNode.addChild(node)
                 }
@@ -200,7 +200,29 @@ export class Tree {
         }
         return []
     }
+    public findBFSNodes(titles: string[]): NodeOrNull[] {
+        let queue: Array<NodeTree> = [this.root];
+        let current: NodeTree;
+        let match: NodeOrNull[] = [];
+        const keys: Array<string> = [];
+        let titlesToFind = titles
 
+        while (queue.length > 0 && titlesToFind.length) {
+            current = queue.shift() as NodeTree;
+            const key = current.id;
+            if (keys.includes(key)) {
+                continue
+            }
+            if (titles.includes(current.name)) {
+                match.push(current)
+                titlesToFind = titlesToFind.filter(item => item !== current.name)
+            }
+            queue.push(...current.getChild());
+            keys.push(key);
+        }
+
+        return match
+    }
 
     public findBFS(title: string): NodeOrNull {
         let queue: Array<NodeTree> = [this.root];

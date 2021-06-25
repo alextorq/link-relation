@@ -103,12 +103,9 @@ function createStream(ws: WebSocket, titles: Array<string>) {
     stream.on('data',  data => {
         try {
             data.data.data.parse.text = ''
-        }catch (e){
-            return
-        }
-        queue.sendTree(selectNode)
-        const title = data.data.data.parse.title
-        try {
+            queue.sendTree(selectNode)
+            const title = data.data.data.parse.title
+
             const titles = data.data.data.parse.links.map((item: {title: string}) => item.title);
 
             tree.addChildren(title, titles)
@@ -144,14 +141,24 @@ function createStream(ws: WebSocket, titles: Array<string>) {
             }
         }
         if (currentNode) {
-            currentLevel = tree.getBrunchTop(currentNode.getTitle()).length
-            console.log(currentLevel)
-            if (currentLevel > MAX_LEVEL) {
-                console.log('rich max level search')
-                // TODO notify user
-                return
+            //TODO refactoring проверка на сущ и тд
+            const findNext = (): void => {
+                // @ts-ignore
+                currentLevel = tree.getBrunchTop(currentNode.getTitle()).length
+                console.log({currentLevel})
+                if (currentLevel > MAX_LEVEL) {
+                    console.log('rich max level search')
+                    // TODO notify user
+                    return
+                }
+                // @ts-ignore
+                if (!currentNode.getNotTravel().length) {
+                    return findNext()
+                }
+                // @ts-ignore
+                createStream(ws, currentNode.getNotTravel().map(item => item.getTitle()));
             }
-            createStream(ws, currentNode.getNotTravel().map(item => item.getTitle()));
+            findNext()
         }
     });
 }
