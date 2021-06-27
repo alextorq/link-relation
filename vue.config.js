@@ -1,5 +1,3 @@
-const WorkerPlugin = require('worker-plugin');
-
 module.exports = {
   lintOnSave: false,
   configureWebpack: {
@@ -7,7 +5,6 @@ module.exports = {
       globalObject: 'this',
     },
     plugins: [
-      new WorkerPlugin(),
     ],
   },
 };

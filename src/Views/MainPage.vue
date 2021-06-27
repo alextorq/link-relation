@@ -1,26 +1,10 @@
 <template>
   <div class="hello">
-    <form action="/" @submit.prevent="getSearchTitles">
-      <input type="text" v-model="searchQuery">
-      <input type="text" v-model="search2Query">
-        <button>Submit</button>
-    </form>
-    <form action="/" @submit.prevent="getContents">
-      <select v-model="pageTitle">
-        <option :value="item.title"
-                :key="item.title"
-                v-for="item of searchSuggest">
-                {{item.title}}
-        </option>
-      </select>
-      <select v-model="pageTitle2">
-        <option :value="item.title"
-                :key="item.title"
-                v-for="item of searchSuggest2">
-                {{item.title}}
-        </option>
-      </select>
-      <button>Submit</button>
+    <form action="/" style="display: flex; align-items: center; justify-content: center;" @submit.prevent="getContents">
+      <Select :value="searchQuery"
+              @input="getSearchTitle" :options="searchSuggest"></Select>
+      <Select :value="search2Query" @input="getSearchTitle2" :options="searchSuggest2"></Select>
+        <button :disabled="!isShowSubmit">Submit</button>
     </form>
 
     <bruch v-if="isShowBrunch" :brunch="brunch"/>
@@ -51,6 +35,7 @@ import apiID from '@/API/apiID';
 import {Commands} from '../../server/API/index';
 const ws = new WebSocket(`ws://localhost:3001?id=${apiID.id}`);
 import bruch from '@/components/bruch.vue';
+import Select from '@/components/Select.vue';
 
 let timerID: any = null;
 
@@ -69,7 +54,6 @@ export default defineComponent({
     const initialBrunch: DTO[] = [];
     const brunch = ref(initialBrunch);
 
-
     const isShowBrunch = computed(() => !!brunch.value.length);
 
     const treeDTO = ref(initialDTO);
@@ -86,17 +70,15 @@ export default defineComponent({
       }
     });
 
+    const isShowSubmit = computed(() => !!search2Query.value && !!searchQuery.value);
+
     const key = ref(1);
 
-    const searchSuggest = ref([]);
-    const searchSuggest2 = ref([]);
-
-    const pageTitle = ref('');
-    const pageTitle2 = ref('');
+    const searchSuggest = ref<object[]>([]);
+    const searchSuggest2 = ref<object[]>([]);
 
     const page = ref(1);
     const itemPerPage = ref(6);
-
 
     const changeNode = (id: string) => {
       if (!id) return;
@@ -134,27 +116,34 @@ export default defineComponent({
       key.value++;
     };
 
-    const getSearchTitles = async () => {
-      const {data} = await getSearch(searchQuery.value, search2Query.value);
-      searchSuggest.value = data[0];
-      searchSuggest2.value = data[1];
+    const getSearchTitle = async (title: string) => {
+      searchQuery.value = title;
+      const {data} = await getSearch(title);
+      searchSuggest.value = data as Array<object>;
+    };
+
+    const getSearchTitle2 = async (title: string) => {
+      search2Query.value = title;
+      const {data} = await getSearch(title);
+      searchSuggest2.value = data as Array<object>;
     };
 
     const getContents = async () => {
-      const {data} = await getContent(pageTitle.value, pageTitle2.value);
+      const {data} = await getContent(searchQuery.value, search2Query.value);
       updateTree(data);
     };
 
-    onMounted(getSearchTitles);
+    onMounted(() => {
+      getSearchTitle(searchQuery.value);
+      getSearchTitle2(search2Query.value);
+    });
 
     return {
       searchQuery,
       search2Query,
       searchSuggest,
       searchSuggest2,
-      pageTitle,
-      pageTitle2,
-      getSearchTitles,
+      getSearchTitle,
       getContents,
       treeDTO,
       key,
@@ -164,6 +153,8 @@ export default defineComponent({
       changePage,
       brunch,
       isShowBrunch,
+      getSearchTitle2,
+      isShowSubmit,
     };
   },
 
@@ -171,6 +162,7 @@ export default defineComponent({
     graf,
     pagination,
     bruch,
+    Select,
   },
 });
 

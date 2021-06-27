@@ -187,12 +187,12 @@ wss.on('connection', (ws, request) => {
 
 
 router
-    .get('/titles', async (ctx) => {
+    .get('/title', async (ctx) => {
       allStop();
-      const {first, second} = ctx.request.query;
+      const {first} = ctx.request.query;
       const {data} = await searchRequest(first);
-      const {data: data2} = await searchRequest(second);
-      ctx.body = [data.query.search, data2.query.search];
+      console.log(data);
+      ctx.body = data?.query?.search ?? [];
     })
     .get('/content', async (ctx) => {
       try {

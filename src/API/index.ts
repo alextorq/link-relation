@@ -2,11 +2,10 @@ import axios, {AxiosPromise} from 'axios';
 import {DTO} from '../../server/TREE';
 import ApiID from './apiID';
 
-export function getSearch(first:string, second:string): AxiosPromise<any[]> {
-  return axios.get('http://localhost:3000/titles', {
+export function getSearch(first:string): AxiosPromise<any[]> {
+  return axios.get('http://localhost:3000/title', {
     params: {
       first,
-      second,
     },
   });
 }
