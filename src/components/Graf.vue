@@ -120,6 +120,6 @@ export default defineComponent({
 <style scoped>
   svg {
     width: 100vw;
-    height: 60vw;
+    height: 48vw;
   }
 </style>
