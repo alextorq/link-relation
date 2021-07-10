@@ -4,7 +4,11 @@
       @focusout="handleFocusOut"
       tabindex="0"
       class="select" :class="classWrapper">
-      <input type="text" v-model="val" @focus="handleFocus">
+      <input type="text"
+             ref="input"
+             v-model="val"
+             @keyup.esc="handleFocusOut"
+             @focus="handleFocus">
     <ul>
       <li v-for="item of options" @click="() => selectItem(item)" :key="item">
         {{item.title}}
@@ -44,6 +48,7 @@ export default defineComponent({
     },
     handleFocusOut() {
       this.open = false;
+      (this.$refs.input as HTMLInputElement).blur();
     },
     selectItem(item: { title: string }) {
       this.$emit('select', item);

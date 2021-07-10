@@ -4,7 +4,6 @@ import {routes} from './server/Routes';
 
 const app = new Koa();
 
-
 app.use(cors());
 app.use(routes());
 
